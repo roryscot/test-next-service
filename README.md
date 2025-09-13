@@ -1,89 +1,118 @@
-# interview-next-service
+# Interview App (Next.js + LiveKit)
 
-> **Take-home assignment**  
-> Build a small Next.js (App Router) application that lets an interviewer compose a set of questions and then run a LiveKit audio call where an **AI agent** conducts the interview using those questions.
+A Next.js application that allows interviewers to compose interview questions
+and conduct AI-powered interviews via LiveKit audio calls.
 
----
+## Features
 
-## 1 · Why this project?
+- **Prompt Builder**: Create and edit interview instructions for the AI agent
+- **Live Interview**: Join LiveKit rooms and conduct real-time audio interviews
+- **AI Agent**: External CLI agent that fetches prompts and conducts interviews
+  using OpenAI Realtime API
 
-We want to see how you:
+## Quick Start
 
-* reason about product requirements and developer experience  
-* structure a small but complete TypeScript/Next.js code-base  
-* integrate an LiveKit API ([LiveKit](https://livekit.io/))  
-* write clean, testable, well-documented code  
+### 1. Environment Setup
 
----
+Copy `.env.local` and fill in your credentials:
 
-## 2 · What you need to build
+```bash
+# LiveKit Cloud or your self-hosted instance
+LIVEKIT_URL="wss://<your-livekit-domain>"
+LIVEKIT_API_KEY="lk_..."
+LIVEKIT_API_SECRET="..."
 
-| Route | Purpose | Notes |
-|-------|---------|-------|
-| **`/questionnaire-prompt-builder`** | UI that lets the interviewer enter or edit a *single* prompt (free-text) | *Persist* on **Save** – you may choose an in-memory store, the file-system, or a database (e.g. SQLite/PostgreSQL). |
-| **`GET /api/questionnaire-prompt-builder`** | Returns `{ prompt: string }` | Consumed by the AI agent (see below). |
-| **`/call`** | Creates a LiveKit room and perform the interview | The agent fetches the prompt via the endpoint above and performs the interview. |
+# OpenAI (Agent only)
+OPENAI_API_KEY="sk-..."
+OPENAI_REALTIME_MODEL="gpt-4o-realtime-preview-2024-12-17"
+```
 
-### LiveKit 
-Those LiveKit resources might be helpful:
-- LiveKit [docs](https://docs.livekit.io/home/) 
-- LiveKit Next.js [quickstart](https://docs.livekit.io/home/quickstarts/nextjs/)
+### 2. Install Dependencies
 
+```bash
+npm install
+```
 
-### LiveKit AI Agent 
-
-We include a minimal livekit agent: [interview-strella-agent](http://github.com/corner3-ai/interview-strella-agent)
-
-* connects to the same LiveKit server as the browser client
-* requests the prompt from `/api/questionnaire-prompt-builder`
-
-
----
-
-## 4 · Getting started locally
-
-Run the development server:
+### 3. Run the Application
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app will be available at http://localhost:3000
 
-Note that the provided agent expects `interview-next-service` to run on port `3000`
+### 4. Start an Interview
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Visit `/questionnaire-prompt-builder` to create your interview instructions
+2. Visit `/call` to join a LiveKit room
+3. In another terminal, run the AI agent:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+SERVER_ORIGIN=http://localhost:3000 \
+LIVEKIT_URL=wss://<your-livekit-domain> \
+LIVEKIT_API_KEY=lk_... \
+LIVEKIT_API_SECRET=... \
+OPENAI_API_KEY=sk-... \
+npm run agent demo-room
+```
 
+## Project Structure
 
-## 5 · How to submit your work
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── questionnaire-prompt-builder/route.ts  # GET/POST prompt API
+│   │   └── livekit/
+│   │       ├── token/route.ts                      # LiveKit access tokens
+│   │       └── url/route.ts                        # LiveKit WebSocket URL
+│   ├── call/page.tsx                               # Interview call interface
+│   ├── questionnaire-prompt-builder/page.tsx       # Prompt builder UI
+│   ├── layout.tsx                                  # Root layout
+│   └── page.tsx                                    # Home page with navigation
+├── lib/
+│   ├── prompt-store.ts                             # Filesystem prompt persistence
+│   └── livekit.ts                                  # LiveKit token utilities
+└── agents/
+    └── interview-strella-agent.ts                  # External AI agent CLI
+```
 
-1. **Fork** this repository on GitHub.  
-2. In the fork, create a branch named `submission/<your-github-username>` off `main`.  
-3. **Keep the fork private** and grant *read* access to:  
-   * `@lhylton`  
-   * `@mr-robek`  
-4. Develop on that branch. When you’re satisfied, open a **pull request** in *your own fork* from `submission/<your-github-username>` → `main`.  
-   * In the PR description include:  
-     * a checklist of finished requirements  
-     * total time spent  
-     * any known trade-offs / TODOs  
-5. Tag the reviewers above so we get notified.    
-6. **Do not** open PRs against the public upstream repo; we review only in your private fork.
+## API Endpoints
 
-⏱ **Suggested time budget**: 3–6 hours. Quality over scope!
+- `GET /api/questionnaire-prompt-builder` - Returns current prompt
+- `POST /api/questionnaire-prompt-builder` - Saves new prompt
+- `POST /api/livekit/token` - Issues LiveKit access tokens
+- `GET /api/livekit/url` - Returns LiveKit WebSocket URL
 
----
+## LiveKit Setup
 
-## 6 · Need help? Ask early!
+1. Create a project at [LiveKit Cloud](https://cloud.livekit.io/) or set up
+   self-hosted LiveKit
+2. Copy your WebSocket URL, API key, and secret to `.env.local`
+3. Ensure CORS/WebSocket ingress works from localhost:3000
 
-Please do not hesitate to reach out if you have any questions!
+## AI Agent
 
-Good luck & have fun! 🚀
+The external agent:
+
+- Fetches prompts from `/api/questionnaire-prompt-builder`
+- Connects to the same LiveKit room as the browser client
+- Uses OpenAI Realtime API for voice interaction
+- Starts conversations with "Hello! Are you ready to get started?"
+
+## Development
+
+- **Port**: 3000 (required for agent integration)
+- **Styling**: Tailwind CSS 4 with dark theme
+- **Persistence**: Filesystem-based prompt storage (easily swappable to
+  database)
+- **Error Handling**: Graceful fallbacks for connection issues
+
+## Troubleshooting
+
+- Ensure all environment variables are set correctly
+- Check that LiveKit credentials are valid
+- Verify OpenAI API key has access to Realtime models
+- Make sure the agent can reach `http://localhost:3000`
+
+Good luck! 🚀
