@@ -1,21 +1,18 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
-@import "tailwindcss/preflight";
-@tailwind utilities;
+@import "../styles/tokens.css";
+@import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: dark light;
 }
 
 html,
 body {
   height: 100%;
-  font-family: "Inter", system-ui, sans-serif;
 }
 
 body {
-  background: rgb(15 15 18);
-  color: rgb(235 235 240);
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
 }
 
 /* Custom scrollbar */

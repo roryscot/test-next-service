@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ToastProvider } from "@/components/ui/Toast";
+import Providers from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,7 +11,11 @@ export const metadata: Metadata = {
     "Conduct professional AI-powered interviews with LiveKit integration",
   keywords: ["interview", "AI", "LiveKit", "voice", "recruitment"],
   authors: [{ name: "InterviewAI Team" }],
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -20,9 +24,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        <ToastProvider>{children}</ToastProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

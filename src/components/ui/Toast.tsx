@@ -1,122 +1,63 @@
 "use client";
-// src/components/ui/Toast.tsx
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
-type ToastType = "success" | "error" | "warning" | "info";
-
-interface Toast {
+type Toast = {
   id: string;
-  type: ToastType;
   title: string;
   description?: string;
-  duration?: number;
-}
+  variant?: "default" | "success" | "warn" | "danger";
+};
 
-interface ToastContextType {
-  toasts: Toast[];
-  addToast: (toast: Omit<Toast, "id">) => void;
-  removeToast: (id: string) => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+const ToastCtx = createContext<{ push: (t: Omit<Toast, "id">) => void } | null>(
+  null
+);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = Math.random().toString(36).substring(2, 15);
-    const newToast = { ...toast, id };
-
-    setToasts(prev => [...prev, newToast]);
-
-    // Auto remove after duration
-    const duration = toast.duration || 5000;
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, duration);
+  const push = useCallback((t: Omit<Toast, "id">) => {
+    const id = Math.random().toString(36).slice(2, 9);
+    setToasts(s => [...s, { id, ...t }]);
+    setTimeout(() => setToasts(s => s.filter(x => x.id !== id)), 4000);
   }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+  const ctx = useMemo(() => ({ push }), [push]);
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastCtx.Provider value={ctx}>
       {children}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
-    </ToastContext.Provider>
+      <div className="fixed right-4 bottom-4 z-50 flex flex-col gap-2">
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            role="status"
+            className={`shadow-soft bg-card min-w-[260px] rounded-2xl px-4 py-3 ring-1 ring-white/10 ${
+              t.variant === "success"
+                ? "border-success border-l-4"
+                : t.variant === "warn"
+                  ? "border-warn border-l-4"
+                  : t.variant === "danger"
+                    ? "border-danger border-l-4"
+                    : "border-primary border-l-4"
+            }`}
+          >
+            <div className="font-medium">{t.title}</div>
+            {t.description && (
+              <div className="text-muted mt-0.5 text-sm">{t.description}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </ToastCtx.Provider>
   );
 }
 
 export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
-  }
-  return context;
-}
-
-function ToastContainer({
-  toasts,
-  onRemove,
-}: {
-  toasts: Toast[];
-  onRemove: (id: string) => void;
-}) {
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map(toast => (
-        <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
-      ))}
-    </div>
-  );
-}
-
-function ToastItem({
-  toast,
-  onRemove,
-}: {
-  toast: Toast;
-  onRemove: (id: string) => void;
-}) {
-  const icons = {
-    success: CheckCircle,
-    error: AlertCircle,
-    warning: AlertTriangle,
-    info: Info,
-  };
-
-  const colors = {
-    success: "bg-success-50 border-success-200 text-success-800",
-    error: "bg-error-50 border-error-200 text-error-800",
-    warning: "bg-warning-50 border-warning-200 text-warning-800",
-    info: "bg-info-50 border-info-200 text-info-800",
-  };
-
-  const Icon = icons[toast.type];
-
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-3 rounded-lg border p-4 shadow-lg transition-all duration-300",
-        colors[toast.type]
-      )}
-    >
-      <Icon className="mt-0.5 h-5 w-5 flex-shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{toast.title}</p>
-        {toast.description && (
-          <p className="mt-1 text-sm opacity-90">{toast.description}</p>
-        )}
-      </div>
-      <button
-        onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 rounded p-1 transition-colors hover:bg-black/10"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
-  );
+  const ctx = useContext(ToastCtx);
+  if (!ctx) throw new Error("useToast must be used within ToastProvider");
+  return ctx;
 }

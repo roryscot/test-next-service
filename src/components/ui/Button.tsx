@@ -1,53 +1,118 @@
-// src/components/ui/Button.tsx
-import React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { forwardRef, ButtonHTMLAttributes } from "react";
+import clsx from "clsx";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary-500 text-white hover:bg-primary-600 shadow-sm",
-        destructive: "bg-error-500 text-white hover:bg-error-600 shadow-sm",
-        outline:
-          "border border-neutral-300 bg-transparent hover:bg-neutral-100 hover:text-neutral-900",
-        secondary:
-          "bg-neutral-200 text-neutral-900 hover:bg-neutral-300 shadow-sm",
-        ghost: "hover:bg-neutral-100 hover:text-neutral-900",
-        link: "text-primary-500 underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-);
+type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger";
+type Size = "sm" | "md" | "lg" | "xl";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+  size?: Size;
+  loading?: boolean;
+  icon?: React.ReactNode;
+  iconPosition?: "left" | "right";
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+export const Button = forwardRef<HTMLButtonElement, Props>(
+  (
+    {
+      className,
+      variant = "primary",
+      size = "md",
+      loading,
+      disabled,
+      children,
+      icon,
+      iconPosition = "left",
+      ...rest
+    },
+    ref
+  ) => {
+    const base = clsx(
+      // Base styles
+      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-fast focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-bg disabled:opacity-60 disabled:pointer-events-none",
+      // Size variants
+      {
+        "px-3 py-1.5 text-sm rounded-md": size === "sm",
+        "px-4 py-2 text-base rounded-lg": size === "md",
+        "px-6 py-3 text-lg rounded-xl": size === "lg",
+        "px-8 py-4 text-xl rounded-xl": size === "xl",
+      }
+    );
+
+    const variants: Record<Variant, string> = {
+      primary: clsx(
+        "bg-primary text-primary-foreground shadow-md",
+        "hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5",
+        "active:bg-primary-active active:translate-y-0 active:shadow-md",
+        "focus:ring-primary"
+      ),
+      secondary: clsx(
+        "bg-card text-fg border border-border shadow-sm",
+        "hover:bg-card-hover hover:border-border-hover hover:shadow-md hover:-translate-y-0.5",
+        "active:bg-card active:translate-y-0 active:shadow-sm",
+        "focus:ring-primary"
+      ),
+      outline: clsx(
+        "border border-border text-fg bg-transparent",
+        "hover:bg-muted/30 hover:border-border-hover hover:shadow-sm",
+        "active:bg-muted/50 active:shadow-none",
+        "focus:ring-primary"
+      ),
+      ghost: clsx(
+        "text-fg bg-transparent",
+        "hover:bg-muted/30 hover:text-fg",
+        "active:bg-muted/50",
+        "focus:ring-primary"
+      ),
+      danger: clsx(
+        "bg-danger text-danger-foreground shadow-md",
+        "hover:bg-danger/90 hover:shadow-lg hover:-translate-y-0.5",
+        "active:bg-danger/80 active:translate-y-0 active:shadow-md",
+        "focus:ring-danger"
+      ),
+    };
+
+    const loadingSpinner = (
+      <span
+        className={clsx(
+          "animate-spin rounded-full border-2 border-current border-t-transparent",
+          {
+            "h-3 w-3": size === "sm",
+            "h-4 w-4": size === "md",
+            "h-5 w-5": size === "lg",
+            "h-6 w-6": size === "xl",
+          }
+        )}
+        aria-hidden
+      />
+    );
+
+    const iconElement = icon && (
+      <span
+        className={clsx({
+          "h-3 w-3": size === "sm",
+          "h-4 w-4": size === "md",
+          "h-5 w-5": size === "lg",
+          "h-6 w-6": size === "xl",
+        })}
+      >
+        {icon}
+      </span>
+    );
+
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        {...props}
-      />
+        className={clsx(base, variants[variant], className)}
+        disabled={disabled || loading}
+        {...rest}
+      >
+        {loading && loadingSpinner}
+        {!loading && iconPosition === "left" && iconElement}
+        {children && <span>{children}</span>}
+        {!loading && iconPosition === "right" && iconElement}
+      </button>
     );
   }
 );
 Button.displayName = "Button";
-
-export { Button, buttonVariants };
