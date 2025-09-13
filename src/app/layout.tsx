@@ -1,21 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui/Toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Interview App",
-  description:
-    "Build interview prompts and conduct AI-powered interviews with LiveKit",
+  title: "InterviewAI - AI-Powered Interview Platform",
+  description: "Conduct professional AI-powered interviews with LiveKit integration",
+  keywords: ["interview", "AI", "LiveKit", "voice", "recruitment"],
+  authors: [{ name: "InterviewAI Team" }],
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
@@ -24,11 +19,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="en" className="dark">
+      <body className={`${inter.className} antialiased`}>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

@@ -12,11 +12,15 @@
   "dependencies": {
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "livekit-client": "^2.13.3",
     "livekit-server-sdk": "^2.6.0",
+    "lucide-react": "^0.544.0",
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.3.1",
     "zod": "^4.1.8"
   },
   "devDependencies": {
