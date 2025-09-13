@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
 import { Mic, FileText, Users, Zap } from "lucide-react";
 
 export default function Home() {
@@ -8,22 +14,23 @@ export default function Home() {
     <Layout>
       <div className="space-y-8">
         {/* Hero Section */}
-        <div className="text-center space-y-4">
+        <div className="space-y-4 text-center">
           <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-100">
             AI-Powered Interview Platform
           </h1>
-          <p className="text-xl text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-            Conduct professional interviews with AI agents powered by OpenAI and LiveKit. 
-            Create custom prompts and engage in real-time voice conversations.
+          <p className="mx-auto max-w-2xl text-xl text-neutral-600 dark:text-neutral-400">
+            Conduct professional interviews with AI agents powered by OpenAI and
+            LiveKit. Create custom prompts and engage in real-time voice
+            conversations.
           </p>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="transition-shadow hover:shadow-lg">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+              <div className="bg-primary-100 dark:bg-primary-900 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <FileText className="text-primary-600 dark:text-primary-400 h-6 w-6" />
               </div>
               <CardTitle className="text-lg">Prompt Builder</CardTitle>
               <CardDescription>
@@ -32,10 +39,10 @@ export default function Home() {
             </CardHeader>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="transition-shadow hover:shadow-lg">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-info-100 dark:bg-info-900 rounded-lg flex items-center justify-center mb-4">
-                <Mic className="h-6 w-6 text-info-600 dark:text-info-400" />
+              <div className="bg-info-100 dark:bg-info-900 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Mic className="text-info-600 dark:text-info-400 h-6 w-6" />
               </div>
               <CardTitle className="text-lg">Live Interviews</CardTitle>
               <CardDescription>
@@ -44,10 +51,10 @@ export default function Home() {
             </CardHeader>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="transition-shadow hover:shadow-lg">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-success-100 dark:bg-success-900 rounded-lg flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-success-600 dark:text-success-400" />
+              <div className="bg-success-100 dark:bg-success-900 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Users className="text-success-600 dark:text-success-400 h-6 w-6" />
               </div>
               <CardTitle className="text-lg">Multi-Participant</CardTitle>
               <CardDescription>
@@ -56,10 +63,10 @@ export default function Home() {
             </CardHeader>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="transition-shadow hover:shadow-lg">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-warning-100 dark:bg-warning-900 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="h-6 w-6 text-warning-600 dark:text-warning-400" />
+              <div className="bg-warning-100 dark:bg-warning-900 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Zap className="text-warning-600 dark:text-warning-400 h-6 w-6" />
               </div>
               <CardTitle className="text-lg">Real-time AI</CardTitle>
               <CardDescription>
@@ -70,12 +77,12 @@ export default function Home() {
         </div>
 
         {/* Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <Link href="/questionnaire-prompt-builder">
-            <Card className="hover:shadow-lg transition-all duration-200 hover:scale-105 cursor-pointer border-primary-200 dark:border-primary-800">
+            <Card className="border-primary-200 dark:border-primary-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
+                  <div className="bg-primary-500 flex h-10 w-10 items-center justify-center rounded-lg">
                     <FileText className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -88,17 +95,18 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Design custom interview flows, set conversation guidelines, and configure AI behavior for your specific use case.
+                  Design custom interview flows, set conversation guidelines,
+                  and configure AI behavior for your specific use case.
                 </p>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/call">
-            <Card className="hover:shadow-lg transition-all duration-200 hover:scale-105 cursor-pointer border-info-200 dark:border-info-800">
+            <Card className="border-info-200 dark:border-info-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-info-500 rounded-lg flex items-center justify-center">
+                  <div className="bg-info-500 flex h-10 w-10 items-center justify-center rounded-lg">
                     <Mic className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -111,7 +119,8 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Connect to interview rooms, manage participants, and conduct real-time voice conversations with AI agents.
+                  Connect to interview rooms, manage participants, and conduct
+                  real-time voice conversations with AI agents.
                 </p>
               </CardContent>
             </Card>

@@ -1,13 +1,23 @@
 {
   "name": "interview-next-service",
   "version": "0.1.0",
-  "private": true,
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
   "scripts": {
     "dev": "next dev --turbopack -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint",
-    "agent": "ts-node src/agents/interview-strella-agent.ts demo-room"
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "agent": "ts-node src/agents/interview-strella-agent.ts demo-room",
+    "prepare": "husky"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.6",
@@ -34,7 +44,11 @@
     "dotenv": "^16.4.5",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
     "node-fetch": "^3.3.2",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
