@@ -62,6 +62,6 @@ test.describe("API Endpoints", () => {
       }
     );
 
-    expect(response.status()).toBe(500); // Should return error for invalid request
+    expect(response.status()).toBe(400); // Should return validation error for invalid request
   });
 });

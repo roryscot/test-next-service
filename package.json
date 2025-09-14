@@ -28,6 +28,7 @@
     "docker:clean": "docker-compose down -v && docker system prune -f"
   },
   "dependencies": {
+    "@playwright/test": "^1.55.0",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
     "class-variance-authority": "^0.7.1",

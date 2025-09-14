@@ -36,8 +36,10 @@ test.describe("Interview Next Service", () => {
     // Click save button
     await page.locator('button:has-text("Save")').click();
 
-    // Wait for success toast or confirmation
-    await expect(page.locator('[data-testid="toast"], .toast')).toBeVisible();
+    // Wait for success toast or confirmation (sonner toast)
+    await expect(
+      page.locator("[data-sonner-toast], .sonner-toast")
+    ).toBeVisible();
 
     // Reload page to verify persistence
     await page.reload();
