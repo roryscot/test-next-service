@@ -17,7 +17,17 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { toast } from "sonner";
-import { Mic, MicOff, Phone, PhoneOff, Users, Hash, User } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  Phone,
+  PhoneOff,
+  Users,
+  Hash,
+  User,
+  FileText,
+  Plus,
+} from "lucide-react";
 
 // Extend Window interface to include our permission request resolve function
 declare global {
@@ -38,8 +48,41 @@ export default function CallPage() {
   const [muted, setMuted] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [selectedPrompt, setSelectedPrompt] = useState<string>("");
+  const [availablePrompts, setAvailablePrompts] = useState<
+    Array<{ id: string; name: string; content: string }>
+  >([]);
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LocalAudioTrack | null>(null);
+
+  // Load available prompts on component mount
+  useEffect(() => {
+    loadAvailablePrompts();
+  }, []);
+
+  // Load available prompts from the API
+  async function loadAvailablePrompts() {
+    try {
+      const response = await fetch("/api/questionnaire-prompt-builder");
+      const data = await response.json();
+
+      // For now, we'll use the single global prompt
+      // In a full implementation, you'd have multiple prompts stored
+      setAvailablePrompts([
+        {
+          id: "global",
+          name: "Global Interview Prompt",
+          content: data.prompt,
+        },
+      ]);
+
+      // Set the global prompt as default
+      setSelectedPrompt("global");
+    } catch (error) {
+      console.error("Failed to load prompts:", error);
+      toast.error("Failed to load prompts");
+    }
+  }
 
   // Check microphone permission
   async function checkMicrophonePermission(): Promise<
@@ -106,14 +149,35 @@ export default function CallPage() {
         }
       }
 
-      // Get LiveKit URL and token
+      // Save room-specific prompt if needed
+      const selectedPromptData = availablePrompts.find(
+        p => p.id === selectedPrompt
+      );
+      if (selectedPromptData && selectedPromptData.id !== "global") {
+        console.log("💾 Saving room-specific prompt...");
+        await fetch("/api/room-prompt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomName,
+            prompt: selectedPromptData.content,
+          }),
+        });
+      }
+
+      // Get LiveKit URL and token with prompt information
       console.log("📡 Fetching LiveKit credentials...");
       const [urlResponse, tokenResponse] = await Promise.all([
         fetch("/api/livekit/url"),
         fetch("/api/livekit/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomName, identity }),
+          body: JSON.stringify({
+            roomName,
+            identity,
+            promptId: selectedPrompt,
+            promptContent: selectedPromptData?.content || "",
+          }),
         }),
       ]);
 
@@ -278,6 +342,48 @@ export default function CallPage() {
                     icon={<User className="h-4 w-4" />}
                     placeholder="Enter your name"
                   />
+                </div>
+                <div>
+                  <label className="text-fg mb-2 block text-sm font-medium">
+                    Interview Prompt
+                  </label>
+                  <div className="space-y-2">
+                    <select
+                      value={selectedPrompt}
+                      onChange={e => setSelectedPrompt(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    >
+                      {availablePrompts.map(prompt => (
+                        <option key={prompt.id} value={prompt.id}>
+                          {prompt.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() =>
+                          window.open("/questionnaire-prompt-builder", "_blank")
+                        }
+                        size="sm"
+                        variant="outline"
+                        icon={<Plus className="h-3 w-3" />}
+                        className="text-xs"
+                      >
+                        New Prompt
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          window.open("/questionnaire-prompt-builder", "_blank")
+                        }
+                        size="sm"
+                        variant="outline"
+                        icon={<FileText className="h-3 w-3" />}
+                        className="text-xs"
+                      >
+                        Edit Prompts
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 

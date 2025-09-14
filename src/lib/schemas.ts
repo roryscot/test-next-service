@@ -23,6 +23,8 @@ export const TokenRequest = z.object({
     .string()
     .min(1, "Identity is required")
     .max(100, "Identity too long"),
+  promptId: z.string().optional(),
+  promptContent: z.string().optional(),
 });
 
 export const TokenResponse = z.object({

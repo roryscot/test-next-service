@@ -32,6 +32,49 @@ export class PromptStore {
     );
   }
 
+  // Room-specific prompt methods
+  static async getRoomPrompt(roomName: string): Promise<string | null> {
+    try {
+      const roomFile = path.join(
+        process.cwd(),
+        "data",
+        "rooms",
+        `${roomName}.json`
+      );
+      const buf = await fs.readFile(roomFile, "utf8");
+      const json = JSON.parse(buf);
+      if (typeof json?.prompt === "string") return json.prompt;
+    } catch {}
+    return null;
+  }
+
+  static async saveRoomPrompt(roomName: string, prompt: string): Promise<void> {
+    // Sanitize prompt content
+    const sanitizedPrompt = this.sanitizePrompt(prompt);
+
+    const roomFile = path.join(
+      process.cwd(),
+      "data",
+      "rooms",
+      `${roomName}.json`
+    );
+    await fs.mkdir(path.dirname(roomFile), { recursive: true });
+    await fs.writeFile(
+      roomFile,
+      JSON.stringify(
+        {
+          roomName,
+          prompt: sanitizedPrompt,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+  }
+
   private static sanitizePrompt(prompt: string): string {
     return (
       prompt
