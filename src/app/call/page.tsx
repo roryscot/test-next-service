@@ -311,9 +311,9 @@ export default function CallPage() {
                 <Mic className="text-accent h-5 w-5" />
               </div>
               <div>
-                <CardTitle>Live Interview Session</CardTitle>
+                <CardTitle>AI Interview Session</CardTitle>
                 <CardDescription>
-                  Connect to a room and start your AI-powered interview
+                  Connect to an AI agent and start your interview
                 </CardDescription>
               </div>
             </div>
@@ -409,7 +409,7 @@ export default function CallPage() {
                   <div className="bg-info/10 border-info/20 text-info rounded-lg border p-3 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                      <span>Connecting to room...</span>
+                      <span>Connecting to agent...</span>
                     </div>
                   </div>
                 )}
@@ -425,8 +425,8 @@ export default function CallPage() {
                     loading={status === "connecting"}
                   >
                     {status === "connecting"
-                      ? "Connecting..."
-                      : "Connect to Room"}
+                      ? "Connecting to agent..."
+                      : "Start Interview"}
                   </Button>
                 ) : (
                   <div className="space-y-3">

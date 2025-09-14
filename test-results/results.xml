@@ -1,0 +1,58 @@
+<testsuites id="" name="" tests="2" failures="1" skipped="0" errors="0" time="18.647977">
+<testsuite name="browser-audio-debug.spec.ts" timestamp="2025-09-14T23:14:40.949Z" hostname="chromium" tests="2" failures="1" skipped="0" time="30.249" errors="0">
+<testcase name="Browser Audio Debugging › should debug audio streaming from agent to browser" classname="browser-audio-debug.spec.ts" time="13.566">
+<system-out>
+<![CDATA[✅ Connected to room successfully
+Agent participant visible: false
+Audio elements found: 0
+WebSocket status: WebSocket available
+Room status: No room connection
+Audio tracks: 1
+Agent audio status: No agent audio
+📸 Screenshot saved as audio-debug.png
+Console status: Console available
+🔍 Audio debugging complete - check the logs above for issues
+]]>
+</system-out>
+</testcase>
+<testcase name="Browser Audio Debugging › should test LiveKit room connection and audio" classname="browser-audio-debug.spec.ts" time="16.683">
+<failure message="browser-audio-debug.spec.ts:103:7 should test LiveKit room connection and audio" type="FAILURE">
+<![CDATA[  [chromium] › browser-audio-debug.spec.ts:103:7 › Browser Audio Debugging › should test LiveKit room connection and audio 
+
+    TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("Disconnect")') to be visible
+
+
+      121 |
+      122 |     // Wait for connection
+    > 123 |     await page.waitForSelector('button:has-text("Disconnect")', {
+          |                ^
+      124 |       timeout: 15000,
+      125 |     });
+      126 |
+        at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:123:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/video.webm]]
+
+[[ATTACHMENT|browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

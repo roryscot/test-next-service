@@ -84,29 +84,6 @@ services:
       - strella_network
     restart: unless-stopped
 
-  # Agent Service
-  agent:
-    build:
-      context: ../interview-strella-agent
-      dockerfile: Dockerfile
-    container_name: strella_agent
-    environment:
-      - LIVEKIT_URL=wss://livekit:7880
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=secret
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SERVER_ORIGIN=http://web:3000
-      - OPENAI_REALTIME_MODEL=gpt-4o-realtime-preview-2024-12-17
-      - MAX_SESSION_SECONDS=300
-    command:
-      ["npx", "tsx", "src/interview-agent.ts", "demo-room", "interviewer-001"]
-    depends_on:
-      - livekit
-      - web
-    networks:
-      - strella_network
-    restart: unless-stopped
-
 volumes:
   postgres_data:
   redis_data:
@@ -114,6 +91,5 @@ volumes:
 networks:
   strella_network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.25.0.0/16
+    external: true
+    name: strella_shared_network
