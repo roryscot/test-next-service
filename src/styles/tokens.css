@@ -9,6 +9,11 @@
   --color-fg: #ebebf0;
   --color-fg-secondary: #c8c8d2;
 
+  /* Legacy variable names for compatibility */
+  --bg: var(--color-bg);
+  --fg: var(--color-fg);
+  --card-hover: var(--color-card-hover);
+
   /* Color System - Brand */
   --color-primary: #10b981;
   --color-primary-foreground: #ffffff;
@@ -70,6 +75,11 @@
 
     --color-border: rgb(0 0 0 / 0.1);
     --color-border-hover: rgb(0 0 0 / 0.2);
+
+    /* Legacy variable names for compatibility */
+    --bg: var(--color-bg);
+    --fg: var(--color-fg);
+    --card-hover: var(--color-card-hover);
   }
 }
 

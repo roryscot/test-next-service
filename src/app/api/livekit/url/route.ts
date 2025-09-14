@@ -1,62 +1,17 @@
-import { NextRequest } from "next/server";
-import { livekitWsUrl } from "@/lib/livekit";
-import { LiveKitUrlResponse } from "@/lib/schemas";
-import { createErrorResponse } from "@/lib/errors";
-import { createRequestLogger } from "@/lib/logger";
+import { NextResponse } from "next/server";
 
-// Generate correlation ID for request tracking
-function getCorrelationId(request: NextRequest): string {
-  return (
-    request.headers.get("x-correlation-id") ||
-    request.headers.get("x-request-id") ||
-    `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-  );
-}
-
-export async function GET(request: NextRequest) {
-  const correlationId = getCorrelationId(request);
-  const requestLogger = createRequestLogger(correlationId);
-  const startTime = Date.now();
-
+export async function GET() {
   try {
-    requestLogger.info(
-      { method: "GET", url: request.url },
-      "Fetching LiveKit URL"
-    );
+    // Use ws:// for localhost development to avoid SSL issues
+    // The LiveKit client should handle this properly in development mode
+    const livekitUrl = "ws://localhost:7880";
 
-    const url = livekitWsUrl();
-    const response = LiveKitUrlResponse.parse({ url });
-
-    const duration = Date.now() - startTime;
-    requestLogger.info(
-      {
-        method: "GET",
-        url: request.url,
-        statusCode: 200,
-        duration,
-      },
-      "LiveKit URL fetched successfully"
-    );
-
-    return Response.json(response, {
-      status: 200,
-      headers: {
-        "x-correlation-id": correlationId,
-      },
-    });
+    return NextResponse.json({ url: livekitUrl });
   } catch (error) {
-    const duration = Date.now() - startTime;
-    requestLogger.error(
-      {
-        method: "GET",
-        url: request.url,
-        statusCode: 500,
-        duration,
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      "Failed to fetch LiveKit URL"
+    console.error("Failed to get LiveKit URL:", error);
+    return NextResponse.json(
+      { error: "Failed to get LiveKit URL" },
+      { status: 500 }
     );
-
-    return createErrorResponse(error, 500);
   }
 }

@@ -17,7 +17,15 @@
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
     "agent": "ts-node src/agents/interview-strella-agent.ts demo-room",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "playwright test",
+    "test:install": "playwright install",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:clean": "docker-compose down -v && docker system prune -f"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.6",
@@ -30,7 +38,9 @@
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.8"
   },
   "devDependencies": {

@@ -1,0 +1,119 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: strella_postgres
+    environment:
+      POSTGRES_DB: interview_strella
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - strella_network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: strella_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - strella_network
+    restart: unless-stopped
+
+  # LiveKit Server
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: strella_livekit
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./livekit.yaml:/livekit.yaml
+    command: ["--config", "/livekit.yaml"]
+    networks:
+      - strella_network
+    restart: unless-stopped
+
+  # Next.js Web Service
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: strella_web
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/interview_strella?schema=public
+      - NEXTAUTH_SECRET=your-secret-key-here
+      - NEXTAUTH_URL=http://localhost:3000
+      - LIVEKIT_URL=ws://localhost:7880
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - strella_network
+    restart: unless-stopped
+
+  # Agent Service
+  agent:
+    build:
+      context: ../interview-strella-agent
+      dockerfile: Dockerfile
+    container_name: strella_agent
+    environment:
+      - LIVEKIT_URL=wss://livekit:7880
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SERVER_ORIGIN=http://web:3000
+      - OPENAI_REALTIME_MODEL=gpt-4o-realtime-preview-2024-12-17
+      - MAX_SESSION_SECONDS=300
+    command:
+      ["npx", "tsx", "src/interview-agent.ts", "demo-room", "interviewer-001"]
+    depends_on:
+      - livekit
+      - web
+    networks:
+      - strella_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  strella_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

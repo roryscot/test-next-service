@@ -1,21 +1,9 @@
 // src/middleware.ts
 import { NextRequest, NextResponse } from "next/server";
-import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Apply rate limiting to API routes
-  if (
-    pathname.startsWith("/api/") &&
-    !pathname.startsWith("/api/health") &&
-    !pathname.startsWith("/api/ready")
-  ) {
-    const rateLimitResult = await checkRateLimit(request);
-    if (!rateLimitResult.success) {
-      return rateLimitResult.response!;
-    }
-  }
+  // Note: pathname available for future use if needed
+  // const { pathname } = request.nextUrl;
 
   // Create response with security headers
   const response = NextResponse.next();
@@ -27,17 +15,17 @@ export async function middleware(request: NextRequest) {
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=()"
+    "microphone=*, camera=*, geolocation=*"
   );
 
-  // Content Security Policy
+  // Content Security Policy - Allow both ws: and wss: for LiveKit connections
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval for dev
     "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self' wss: https:",
+    "connect-src 'self' ws: wss: http: https: localhost:* 127.0.0.1:*", // Allow both ws: and wss: for LiveKit
     "media-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",

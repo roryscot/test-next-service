@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { FileText, Mic, Users, Zap, ArrowRight, Sparkles } from "lucide-react";
 
 export default function Home() {

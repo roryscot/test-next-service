@@ -1,24 +1,23 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/spinner";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { Save, FileText } from "lucide-react";
 
 export default function PromptBuilder() {
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { push } = useToast();
 
   useEffect(() => {
     (async () => {
@@ -29,12 +28,12 @@ export default function PromptBuilder() {
         const json = await res.json();
         setValue(json?.prompt ?? "");
       } catch {
-        push({ title: "Failed to load", variant: "danger" });
+        toast.error("Failed to load");
       } finally {
         setLoading(false);
       }
     })();
-  }, [push]);
+  }, []);
 
   async function save() {
     setSaving(true);
@@ -45,9 +44,9 @@ export default function PromptBuilder() {
         body: JSON.stringify({ prompt: value }),
       });
       if (!res.ok) throw new Error();
-      push({ title: "Saved", variant: "success" });
+      toast.success("Saved");
     } catch {
-      push({ title: "Save failed", variant: "danger" });
+      toast.error("Save failed");
     } finally {
       setSaving(false);
     }
