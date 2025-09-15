@@ -370,14 +370,17 @@ export default function CallPage() {
       <div className="mx-auto max-w-4xl space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="bg-accent/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                <Mic className="text-accent h-5 w-5" />
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+                <Mic className="h-6 w-6 text-white" />
               </div>
               <div>
-                <CardTitle>AI Interview Session</CardTitle>
-                <CardDescription>
-                  Connect to an AI agent and start your interview
+                <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+                  AI Interview Session
+                </CardTitle>
+                <CardDescription className="mt-1 text-gray-600">
+                  Connect with our AI interviewer for a personalized interview
+                  experience
                 </CardDescription>
               </div>
             </div>
@@ -470,10 +473,17 @@ export default function CallPage() {
 
                 {/* Connection Status */}
                 {status === "connecting" && (
-                  <div className="bg-info/10 border-info/20 text-info rounded-lg border p-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                      <span>Connecting to agent...</span>
+                  <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 text-sm text-blue-700 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                      <div>
+                        <div className="font-medium">
+                          Connecting to AI Interviewer...
+                        </div>
+                        <div className="mt-1 text-xs text-blue-600">
+                          Setting up your interview session
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -482,43 +492,64 @@ export default function CallPage() {
                   <Button
                     onClick={connect}
                     size="lg"
-                    icon={<Phone className="h-4 w-4" />}
+                    icon={<Phone className="h-5 w-5" />}
                     iconPosition="left"
-                    className="w-full"
+                    className="w-full transform rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-xl"
                     disabled={status === "connecting"}
                     loading={status === "connecting"}
                   >
                     {status === "connecting"
-                      ? "Connecting to agent..."
-                      : "Start Interview"}
+                      ? "Connecting to AI Interviewer..."
+                      : "🎤 Start AI Interview"}
                   </Button>
                 ) : (
-                  <div className="space-y-3">
-                    <Button
-                      variant={muted ? "secondary" : "primary"}
-                      onClick={toggleMute}
-                      size="lg"
-                      icon={
-                        muted ? (
-                          <MicOff className="h-4 w-4" />
-                        ) : (
-                          <Mic className="h-4 w-4" />
-                        )
-                      }
-                      iconPosition="left"
-                      className="w-full"
-                    >
-                      {muted ? "Unmute Microphone" : "Mute Microphone"}
-                    </Button>
+                  <div className="space-y-4">
+                    {/* Audio Controls */}
+                    <div className="rounded-xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-3 w-3 animate-pulse rounded-full bg-green-500"></div>
+                          <div>
+                            <div className="font-medium text-green-800">
+                              Connected to AI Interviewer
+                            </div>
+                            <div className="text-sm text-green-600">
+                              Ready for your interview
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant={muted ? "secondary" : "primary"}
+                          onClick={toggleMute}
+                          size="lg"
+                          icon={
+                            muted ? (
+                              <MicOff className="h-5 w-5" />
+                            ) : (
+                              <Mic className="h-5 w-5" />
+                            )
+                          }
+                          className={`rounded-xl px-6 py-3 font-semibold transition-all duration-200 ${
+                            muted
+                              ? "border-red-300 bg-red-100 text-red-700 hover:bg-red-200"
+                              : "border-green-300 bg-green-100 text-green-700 hover:bg-green-200"
+                          }`}
+                        >
+                          {muted ? "Unmute" : "Muted"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Disconnect Button */}
                     <Button
                       variant="danger"
                       onClick={disconnect}
                       size="lg"
-                      icon={<PhoneOff className="h-4 w-4" />}
+                      icon={<PhoneOff className="h-5 w-5" />}
                       iconPosition="left"
-                      className="w-full"
+                      className="w-full rounded-xl border-red-200 py-3 font-semibold text-red-600 transition-all duration-200 hover:border-red-300 hover:bg-red-50"
                     >
-                      Disconnect
+                      End Interview
                     </Button>
                   </div>
                 )}
@@ -527,45 +558,92 @@ export default function CallPage() {
 
             <div className="border-border mt-8 border-t pt-6">
               <div className="mb-4 flex items-center gap-2">
-                <Users className="text-muted-foreground h-4 w-4" />
-                <span className="text-fg text-sm font-medium">
-                  Connection Status:
-                  <span
-                    className={`ml-2 rounded px-2 py-1 font-mono text-xs ${
-                      status === "connected"
-                        ? "bg-success/10 text-success"
-                        : status === "connecting"
-                          ? "bg-warn/10 text-warn"
-                          : status === "failed"
-                            ? "bg-danger/10 text-danger"
-                            : "bg-muted/10 text-muted-foreground"
-                    }`}
-                  >
-                    {status}
-                  </span>
+                <Users className="text-muted-foreground h-5 w-5" />
+                <span className="text-fg text-lg font-semibold">
+                  Interview Status
                 </span>
               </div>
 
-              <div>
-                <div className="text-fg mb-2 text-sm font-medium">
-                  Participants ({participants.length})
-                </div>
-                <div className="space-y-1">
-                  {participants.length > 0 ? (
-                    participants.map(p => (
-                      <div
-                        key={p}
-                        className="text-muted-foreground flex items-center gap-2 text-sm"
-                      >
-                        <div className="bg-primary h-2 w-2 rounded-full" />
-                        {p}
+              <div className="space-y-4">
+                {/* Connection Status */}
+                <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-3 w-3 rounded-full ${
+                        status === "connected"
+                          ? "animate-pulse bg-green-500"
+                          : status === "connecting"
+                            ? "animate-pulse bg-blue-500"
+                            : "bg-gray-400"
+                      }`}
+                    ></div>
+                    <div>
+                      <div className="font-medium text-gray-800">
+                        {status === "connected"
+                          ? "Connected"
+                          : status === "connecting"
+                            ? "Connecting..."
+                            : status === "failed"
+                              ? "Connection Failed"
+                              : "Disconnected"}
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-muted-foreground text-sm">
-                      No participants connected
+                      <div className="text-sm text-gray-600">
+                        {status === "connected"
+                          ? "AI Interviewer is ready"
+                          : status === "connecting"
+                            ? "Setting up your session"
+                            : status === "failed"
+                              ? "Please try again"
+                              : "Click to start"}
+                      </div>
                     </div>
-                  )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-800">
+                      {participants.length}
+                    </div>
+                    <div className="text-sm text-gray-600">Participants</div>
+                  </div>
+                </div>
+
+                {/* Participants List */}
+                <div className="space-y-2">
+                  <div className="text-fg text-sm font-medium">
+                    Active Participants
+                  </div>
+                  <div className="space-y-2">
+                    {participants.length > 0 ? (
+                      participants.map(p => (
+                        <div
+                          key={p}
+                          className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                        >
+                          <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-800">{p}</div>
+                            <div className="text-sm text-gray-600">
+                              {p.includes("agent")
+                                ? "AI Interviewer"
+                                : "Interview Candidate"}
+                            </div>
+                          </div>
+                          <div className="rounded-full bg-gray-200 px-2 py-1 text-xs text-gray-500">
+                            {p.includes("agent") ? "AI" : "Human"}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-8 text-center text-gray-500">
+                        <Users className="mx-auto mb-3 h-12 w-12 text-gray-300" />
+                        <div className="font-medium">
+                          No participants connected
+                        </div>
+                        <div className="text-sm">
+                          Start the interview to begin
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
