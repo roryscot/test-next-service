@@ -406,6 +406,20 @@ export default function CallPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "stop" }),
     });
+
+    // Reset audio and conversation state
+    setAudioEnabled(false);
+    setIsListening(false);
+    setUserSpeech("");
+    setParticipants([]);
+    setMuted(false);
+    setConnectionError(null);
+
+    // Clear any pending audio
+    if (agentAudioUrl) {
+      URL.revokeObjectURL(agentAudioUrl);
+      setAgentAudioUrl(null);
+    }
   }
 
   async function toggleMute() {
