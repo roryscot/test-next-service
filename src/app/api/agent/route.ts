@@ -123,11 +123,28 @@ async function stopAgent() {
 }
 
 async function getAudio() {
+  if (livekitAgent) {
+    const audioBuffer = livekitAgent.getCurrentAudio();
+    if (audioBuffer) {
+      console.log(
+        `🎵 Returning audio from LiveKit agent (${audioBuffer.length} bytes)`
+      );
+      return new NextResponse(audioBuffer, {
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "Content-Length": audioBuffer.length.toString(),
+        },
+      });
+    }
+  }
+
   if (!currentAudioBuffer) {
     return NextResponse.json({ error: "No audio available" }, { status: 404 });
   }
 
-  console.log(`🎵 Returning audio buffer (${currentAudioBuffer.length} bytes)`);
+  console.log(
+    `🎵 Returning fallback audio buffer (${currentAudioBuffer.length} bytes)`
+  );
 
   return new NextResponse(currentAudioBuffer, {
     headers: {

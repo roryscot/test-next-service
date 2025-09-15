@@ -21,6 +21,7 @@ export class LiveKitAgent {
   ) => void;
   private onInterviewComplete?: () => void;
   private hasAskedCurrentQuestion = false;
+  private currentAudioBuffer: Buffer | null = null;
 
   constructor() {
     const livekitUrl =
@@ -55,6 +56,12 @@ export class LiveKitAgent {
 
     // Start monitoring participants
     this.startParticipantMonitoring();
+
+    // For testing: Start the interview immediately
+    console.log("🧪 Starting interview immediately for testing...");
+    setTimeout(() => {
+      this.askCurrentQuestion();
+    }, 2000);
 
     console.log("✅ LiveKit agent started successfully");
   }
@@ -230,13 +237,16 @@ export class LiveKitAgent {
       `🎫 Generated agent token for publishing audio track: ${trackName}`
     );
 
+    // Store the audio buffer for HTTP fallback
+    this.currentAudioBuffer = audioBuffer;
+
     // In a real implementation, we would use the LiveKit client SDK to connect as a participant
     // and publish the audio track. For now, we'll simulate this by storing the audio
     // and making it available via HTTP endpoint for the client to fetch
 
     // TODO: Implement actual LiveKit client SDK connection and track publishing
     console.log(
-      `📡 Would publish audio track ${trackName} to room ${this.roomName}`
+      `📡 Audio track ${trackName} stored (${audioBuffer.length} bytes) for HTTP fallback`
     );
   }
 
@@ -244,6 +254,6 @@ export class LiveKitAgent {
   getCurrentAudio(): Buffer | null {
     // This is a fallback method for the HTTP-based approach
     // In a proper LiveKit implementation, audio would be streamed via tracks
-    return null;
+    return this.currentAudioBuffer || null;
   }
 }
