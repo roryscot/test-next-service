@@ -143,7 +143,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 13566,
+                      "duration": 13545,
                       "errors": [],
                       "stdout": [
                         {
@@ -179,7 +179,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-14T23:14:41.305Z",
+                      "startTime": "2025-09-14T23:33:31.107Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -208,31 +208,31 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "failed",
-                      "duration": 16683,
+                      "duration": 16742,
                       "error": {
                         "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n",
-                        "stack": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n\n    at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:123:16",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n\n    at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:129:16",
                         "location": {
                           "file": "/Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts",
                           "column": 16,
-                          "line": 123
+                          "line": 129
                         },
-                        "snippet": "\u001b[0m \u001b[90m 121 |\u001b[39m\n \u001b[90m 122 |\u001b[39m     \u001b[90m// Wait for connection\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 123 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'button:has-text(\"Disconnect\")'\u001b[39m\u001b[33m,\u001b[39m {\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 124 |\u001b[39m       timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 125 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 126 |\u001b[39m\u001b[0m"
+                        "snippet": "\u001b[0m \u001b[90m 127 |\u001b[39m\n \u001b[90m 128 |\u001b[39m     \u001b[90m// Wait for connection\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 129 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'button:has-text(\"Disconnect\")'\u001b[39m\u001b[33m,\u001b[39m {\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 130 |\u001b[39m       timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 131 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 132 |\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "/Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts",
                             "column": 16,
-                            "line": 123
+                            "line": 129
                           },
-                          "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 121 |\u001b[39m\n \u001b[90m 122 |\u001b[39m     \u001b[90m// Wait for connection\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 123 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'button:has-text(\"Disconnect\")'\u001b[39m\u001b[33m,\u001b[39m {\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 124 |\u001b[39m       timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 125 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 126 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:123:16\u001b[22m"
+                          "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 127 |\u001b[39m\n \u001b[90m 128 |\u001b[39m     \u001b[90m// Wait for connection\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 129 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'button:has-text(\"Disconnect\")'\u001b[39m\u001b[33m,\u001b[39m {\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 130 |\u001b[39m       timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 131 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 132 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:129:16\u001b[22m"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-14T23:14:41.308Z",
+                      "startTime": "2025-09-14T23:33:31.082Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -254,7 +254,7 @@
                       "errorLocation": {
                         "file": "/Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts",
                         "column": 16,
-                        "line": 123
+                        "line": 129
                       }
                     }
                   ],
@@ -263,7 +263,7 @@
               ],
               "id": "f95c8bc1e48d2b938ff6-6c03d7fb5b29e2bda4f9",
               "file": "browser-audio-debug.spec.ts",
-              "line": 103,
+              "line": 106,
               "column": 7
             }
           ]
@@ -273,8 +273,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-09-14T23:14:40.936Z",
-    "duration": 18647.977000000003,
+    "startTime": "2025-09-14T23:33:29.254Z",
+    "duration": 20272.808,
     "expected": 1,
     "skipped": 0,
     "unexpected": 1,
