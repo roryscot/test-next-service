@@ -151,8 +151,8 @@ export default function CallPage() {
       // Enable audio and start polling for agent audio
       await enableAudio();
 
-      // Start polling for agent audio
-      audioCheckIntervalRef.current = setInterval(checkAndPlayAgentAudio, 2000);
+      // Start polling for agent audio (longer interval for LiveKit agent)
+      audioCheckIntervalRef.current = setInterval(checkAndPlayAgentAudio, 5000);
     } catch (error) {
       console.error("❌ Connection failed:", error);
       setStatus("failed");
@@ -181,8 +181,17 @@ export default function CallPage() {
 
         setAgentAudioUrl(audioUrl);
 
-        // Play the audio
+        // Play the audio and wait for it to finish
         const audio = new Audio(audioUrl);
+
+        audio.addEventListener("ended", async () => {
+          console.log(
+            "🎵 Audio finished playing, waiting for next question..."
+          );
+          // In a proper LiveKit implementation, we would listen for new audio tracks
+          // For now, we'll continue polling but with a longer interval
+        });
+
         audio.play().catch(error => {
           console.log("Audio play failed:", error);
         });

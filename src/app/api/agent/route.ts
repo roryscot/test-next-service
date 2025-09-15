@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { RoomServiceClient } from "livekit-server-sdk";
+import { LiveKitAgent } from "@/lib/livekit-agent";
 import { Buffer } from "buffer";
-import { OpenAI } from "openai";
 
 // Global state for agent
-let isAgentActive = false;
-let agentRoomName = "";
-let roomService: RoomServiceClient;
+let livekitAgent: LiveKitAgent | null = null;
 let currentAudioBuffer: Buffer | null = null;
 let interviewQuestions: string[] = [];
-let interviewStarted = false;
-let lastRealParticipantCount = 0;
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,6 +20,10 @@ export async function POST(request: NextRequest) {
       return await speakText(text);
     } else if (action === "getAudio") {
       return await getAudio();
+    } else if (action === "startInterview") {
+      return await startInterview();
+    } else if (action === "userResponse") {
+      return await handleUserResponse();
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -38,12 +37,12 @@ export async function POST(request: NextRequest) {
 }
 
 async function startAgent(roomName: string) {
-  if (isAgentActive) {
+  if (livekitAgent) {
     return NextResponse.json({ message: "Agent already active" });
   }
 
   try {
-    console.log(`🎤 Starting agent for room: ${roomName}`);
+    console.log(`🎤 Starting LiveKit agent for room: ${roomName}`);
 
     // Fetch the current prompt
     let currentPrompt = "";
@@ -66,69 +65,59 @@ async function startAgent(roomName: string) {
 
     // Parse prompt content to extract questions
     interviewQuestions = parseQuestionnaire(currentPrompt);
-    interviewStarted = false;
 
     console.log(
       `📝 Parsed ${interviewQuestions.length} questions from current prompt`
     );
 
-    // Initialize room service
-    const livekitUrl =
-      process.env.LIVEKIT_URL?.replace("ws://", "http://").replace(
-        "localhost",
-        "livekit"
-      ) || "http://livekit:7880";
-    const apiKey = process.env.LIVEKIT_API_KEY || "devkey";
-    const apiSecret = process.env.LIVEKIT_API_SECRET || "secret";
-
-    roomService = new RoomServiceClient(livekitUrl, apiKey, apiSecret);
-
-    // Check if room exists, create if not
-    try {
-      await roomService.listRooms([roomName]);
-      console.log(`✅ Room ${roomName} exists`);
-    } catch {
-      console.log(`📝 Creating room ${roomName}`);
-      await roomService.createRoom({
-        name: roomName,
-        emptyTimeout: 300, // 5 minutes
-        maxParticipants: 10,
-      });
-    }
-
-    agentRoomName = roomName;
-    isAgentActive = true;
-
-    console.log("🤖 Agent is now monitoring the room");
-
-    // Start monitoring for participants after a short delay to avoid race conditions
-    setTimeout(() => {
-      startParticipantMonitoring();
-    }, 2000);
+    // Create and start the LiveKit agent
+    livekitAgent = new LiveKitAgent();
+    await livekitAgent.start({
+      roomName,
+      questions: interviewQuestions,
+      onQuestionComplete: (questionIndex, question) => {
+        console.log(
+          `✅ Question ${questionIndex + 1} completed: "${question}"`
+        );
+        // Generate audio for the question and store it for HTTP fallback
+        generateAudioForText(question).then(audioBuffer => {
+          currentAudioBuffer = audioBuffer;
+        });
+      },
+      onInterviewComplete: () => {
+        console.log("🎉 Interview completed!");
+        const closingMessage =
+          "Thank you for participating in this interview. Have a great day!";
+        generateAudioForText(closingMessage).then(audioBuffer => {
+          currentAudioBuffer = audioBuffer;
+        });
+      },
+    });
 
     return NextResponse.json({
-      message: "Agent started successfully",
+      message: "LiveKit agent started successfully",
       isActive: true,
       questionsCount: interviewQuestions.length,
     });
   } catch (error) {
-    console.error("Failed to start agent:", error);
+    console.error("Failed to start LiveKit agent:", error);
     return NextResponse.json(
-      { error: "Failed to start agent" },
+      { error: "Failed to start LiveKit agent" },
       { status: 500 }
     );
   }
 }
 
 async function stopAgent() {
-  isAgentActive = false;
-  agentRoomName = "";
+  if (livekitAgent) {
+    await livekitAgent.stop();
+    livekitAgent = null;
+  }
+
   currentAudioBuffer = null;
   interviewQuestions = [];
-  interviewStarted = false;
-  lastRealParticipantCount = 0;
 
-  console.log("🛑 Agent stopped");
+  console.log("🛑 LiveKit agent stopped");
 
   return NextResponse.json({ message: "Agent stopped" });
 }
@@ -138,6 +127,8 @@ async function getAudio() {
     return NextResponse.json({ error: "No audio available" }, { status: 404 });
   }
 
+  console.log(`🎵 Returning audio buffer (${currentAudioBuffer.length} bytes)`);
+
   return new NextResponse(currentAudioBuffer, {
     headers: {
       "Content-Type": "audio/mpeg",
@@ -146,12 +137,51 @@ async function getAudio() {
   });
 }
 
+async function generateAudioForText(text: string): Promise<Buffer> {
+  console.log(`🎵 Generating audio for: "${text}"`);
+
+  // Generate audio data using OpenAI TTS
+  const apiKey = process.env.OPENAI_API_KEY;
+  let audioBuffer: Buffer;
+
+  if (apiKey && !apiKey.includes("placeholder")) {
+    // Generate real audio with OpenAI TTS
+    const { OpenAI } = await import("openai");
+    const openai = new OpenAI({ apiKey });
+    const mp3 = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "alloy",
+      input: text,
+    });
+    audioBuffer = Buffer.from(await mp3.arrayBuffer());
+    console.log(`✅ Generated ${audioBuffer.length} bytes of real audio`);
+  } else {
+    // Generate simulated audio data
+    const duration = Math.max(2000, text.length * 100);
+    const sampleRate = 44100;
+    const samples = Math.floor((duration / 1000) * sampleRate);
+    const bufferSize = samples * 2; // 16-bit samples
+
+    audioBuffer = Buffer.alloc(bufferSize);
+    // Generate a simple sine wave
+    for (let i = 0; i < samples; i++) {
+      const sample = Math.sin((2 * Math.PI * 440 * i) / sampleRate) * 0.1;
+      const sampleValue = Math.floor(sample * 32767);
+      audioBuffer.writeInt16LE(sampleValue, i * 2);
+    }
+    console.log(`✅ Generated ${audioBuffer.length} bytes of simulated audio`);
+  }
+
+  return audioBuffer;
+}
+
 function parseQuestionnaire(content: string): string[] {
   // Parse questionnaire content to extract questions
   const questions: string[] = [];
 
   // First, try to extract questions from quoted text
   const quotedMatches = content.match(/"([^"]*\?[^"]*)"/g);
+
   if (quotedMatches) {
     quotedMatches.forEach(match => {
       const question = match.replace(/"/g, "");
@@ -224,158 +254,17 @@ function parseQuestionnaire(content: string): string[] {
   return questions;
 }
 
-// Global state for participant tracking
-
-async function startParticipantMonitoring() {
-  if (!isAgentActive) return;
-
-  try {
-    const rooms = await roomService.listRooms([agentRoomName]);
-    const room = rooms.find(r => r.name === agentRoomName);
-
-    if (room) {
-      const currentParticipantCount = room.numParticipants || 0;
-      const realParticipants =
-        room.participants?.filter(
-          (p: { identity: string }) => !p.identity.startsWith("agent-")
-        ) || [];
-      const currentRealParticipantCount = realParticipants.length;
-
-      console.log(
-        `👥 Room has ${currentParticipantCount} participants (${currentRealParticipantCount} real)`
-      );
-      console.log(
-        `🔍 Real participants:`,
-        realParticipants.map(p => p.identity)
-      );
-      console.log(
-        `🔍 Last real participant count: ${lastRealParticipantCount}`
-      );
-
-      // Check for participant changes
-      if (currentRealParticipantCount !== lastRealParticipantCount) {
-        if (currentRealParticipantCount > lastRealParticipantCount) {
-          // Participants joined
-          console.log(
-            `👋 ${currentRealParticipantCount - lastRealParticipantCount} participant(s) joined`
-          );
-          if (!interviewStarted && currentRealParticipantCount > 0) {
-            console.log(
-              `🎬 Starting interview with ${currentRealParticipantCount} participants`
-            );
-            interviewStarted = true;
-            // Start interview in a separate async context to avoid blocking
-            setImmediate(() => startInterview());
-          }
-        } else {
-          // Participants left
-          console.log(
-            `👋 ${lastRealParticipantCount - currentRealParticipantCount} participant(s) left`
-          );
-          if (currentRealParticipantCount === 0 && interviewStarted) {
-            console.log(`⏸️ All participants left, pausing interview`);
-            // Don't stop the interview completely, just pause it
-            // The interview will resume if participants rejoin
-          }
-        }
-        lastRealParticipantCount = currentRealParticipantCount;
-      }
-    }
-  } catch (error) {
-    console.error("Error monitoring participants:", error);
-  }
-
-  // Check again in 3 seconds (more frequent for better responsiveness)
-  setTimeout(startParticipantMonitoring, 3000);
-}
-
-async function startInterview() {
-  // Prevent multiple interview starts
-  if (interviewStarted && interviewQuestions.length > 0) {
-    console.log("⚠️ Interview already started, skipping");
-    return;
-  }
-
-  console.log("🎬 Starting interview...");
-  console.log(`📋 Interview questions (${interviewQuestions.length}):`);
-  interviewQuestions.forEach((q, i) => {
-    console.log(`  ${i + 1}. "${q}"`);
-  });
-
-  if (interviewQuestions.length === 0) {
-    console.log("❌ No questions available for interview");
-    return;
-  }
-
-  // Ask each question with proper timing
-  for (let i = 0; i < interviewQuestions.length; i++) {
-    if (!isAgentActive) break;
-
-    const question = interviewQuestions[i];
-    console.log(
-      `🗣️ Agent asking question ${i + 1}/${interviewQuestions.length}: "${question}"`
-    );
-
-    await speakText(question);
-
-    // Wait for user response (simulated - in real implementation, use VAD)
-    const waitTime = Math.max(3000, question.length * 50); // Longer wait for longer questions
-    console.log(`⏳ Waiting ${waitTime}ms for user response...`);
-    await new Promise(resolve => setTimeout(resolve, waitTime));
-  }
-
-  // End interview
-  await speakText(
-    "Thank you for participating in this interview. Have a great day!"
-  );
-  console.log("✅ Interview completed");
-}
-
 async function speakText(text: string) {
-  if (!isAgentActive || !agentRoomName) {
+  if (!livekitAgent) {
     return NextResponse.json({ error: "Agent not active" }, { status: 400 });
   }
 
   try {
     console.log(`🗣️ Agent speaking: "${text}"`);
 
-    // Generate audio data using OpenAI TTS
-    const apiKey = process.env.OPENAI_API_KEY;
-    let audioBuffer: Buffer;
-
-    if (apiKey && !apiKey.includes("placeholder")) {
-      // Generate real audio with OpenAI TTS
-      const openai = new OpenAI({ apiKey });
-      const mp3 = await openai.audio.speech.create({
-        model: "tts-1",
-        voice: "alloy",
-        input: text,
-      });
-      audioBuffer = Buffer.from(await mp3.arrayBuffer());
-      console.log(`✅ Generated ${audioBuffer.length} bytes of real audio`);
-    } else {
-      // Generate simulated audio data
-      const duration = Math.max(2000, text.length * 100);
-      const sampleRate = 44100;
-      const samples = Math.floor((duration / 1000) * sampleRate);
-      const bufferSize = samples * 2; // 16-bit samples
-
-      audioBuffer = Buffer.alloc(bufferSize);
-      // Generate a simple sine wave
-      for (let i = 0; i < samples; i++) {
-        const sample = Math.sin((2 * Math.PI * 440 * i) / sampleRate) * 0.1;
-        const sampleValue = Math.floor(sample * 32767);
-        audioBuffer.writeInt16LE(sampleValue, i * 2);
-      }
-      console.log(
-        `✅ Generated ${audioBuffer.length} bytes of simulated audio`
-      );
-    }
-
-    // Store audio buffer for browser to fetch
+    // Generate audio and store it for HTTP fallback
+    const audioBuffer = await generateAudioForText(text);
     currentAudioBuffer = audioBuffer;
-    console.log(`🔊 Agent says: "${text}"`);
-    console.log(`📊 Audio data: ${audioBuffer.length} bytes`);
 
     return NextResponse.json({
       message: "Speech generated successfully",
@@ -384,14 +273,33 @@ async function speakText(text: string) {
       note: "Audio is available for browser to fetch",
     });
   } catch (error) {
-    console.error("Failed to speak:", error);
-    return NextResponse.json({ error: "Failed to speak" }, { status: 500 });
+    console.error("Failed to generate speech:", error);
+    return NextResponse.json(
+      { error: "Failed to generate speech" },
+      { status: 500 }
+    );
   }
 }
 
-// Keep the agent alive
-setInterval(() => {
-  if (isAgentActive) {
-    console.log("💓 Agent heartbeat");
+async function startInterview() {
+  if (!livekitAgent) {
+    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
   }
-}, 30000);
+
+  // The LiveKit agent handles interview flow automatically
+  return NextResponse.json({
+    message: "Interview flow managed by LiveKit agent",
+    questionsCount: interviewQuestions.length,
+  });
+}
+
+async function handleUserResponse() {
+  if (!livekitAgent) {
+    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
+  }
+
+  // The LiveKit agent handles user responses automatically
+  return NextResponse.json({
+    message: "User response handling managed by LiveKit agent",
+  });
+}
