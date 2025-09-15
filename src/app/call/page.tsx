@@ -54,6 +54,7 @@ export default function CallPage() {
     Array<{ id: string; name: string; description?: string; content: string }>
   >([]);
   const [agentAudioUrl, setAgentAudioUrl] = useState<string | null>(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LocalAudioTrack | null>(null);
 
@@ -87,6 +88,21 @@ export default function CallPage() {
     } catch (error) {
       console.error("Failed to load questionnaires:", error);
       toast.error("Failed to load questionnaires");
+    }
+  }
+
+  // Enable audio playback (required for browser autoplay policies)
+  async function enableAudio() {
+    try {
+      if (roomRef.current) {
+        await roomRef.current.startAudio();
+        setAudioEnabled(true);
+        toast.success("Audio enabled");
+        console.log("🔊 Audio playback enabled");
+      }
+    } catch (error) {
+      console.error("Failed to enable audio:", error);
+      toast.error("Failed to enable audio");
     }
   }
 
@@ -210,6 +226,9 @@ export default function CallPage() {
         console.log("✅ Connected to room successfully");
         setStatus("connected");
         setConnectionError(null);
+
+        // Enable audio playback after connection
+        enableAudio();
       });
       room.on(RoomEvent.Disconnected, reason => {
         console.log("❌ Disconnected from room:", reason);
@@ -535,6 +554,34 @@ export default function CallPage() {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Enable Audio Button */}
+                    {!audioEnabled && (
+                      <div className="rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-3 w-3 rounded-full bg-orange-500"></div>
+                            <div>
+                              <div className="font-medium text-orange-800">
+                                Audio Playback Disabled
+                              </div>
+                              <div className="text-sm text-orange-600">
+                                Click to enable audio and hear the AI
+                                interviewer
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="primary"
+                            onClick={enableAudio}
+                            size="lg"
+                            className="rounded-xl border-orange-300 bg-orange-100 px-6 py-3 font-semibold text-orange-700 transition-all duration-200 hover:bg-orange-200"
+                          >
+                            Enable Audio
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Disconnect Button */}
                     <Button

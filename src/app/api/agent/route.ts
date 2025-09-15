@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RoomServiceClient } from "livekit-server-sdk";
-import { OpenAI } from "openai";
 import { Buffer } from "buffer";
+import { OpenAI } from "openai";
 
 // Global state for agent
 let isAgentActive = false;
@@ -10,6 +10,8 @@ let roomService: RoomServiceClient;
 let currentAudioBuffer: Buffer | null = null;
 let selectedQuestionnaireId: string | null = null;
 let selectedQuestionnaireContent: string | null = null;
+let interviewQuestions: string[] = [];
+let interviewStarted = false;
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +59,14 @@ async function startAgent(
       console.log(`📋 Using questionnaire: ${selectedQuestionnaireId}`);
     }
 
+    // Parse questionnaire content to extract questions
+    interviewQuestions = parseQuestionnaire(selectedQuestionnaireContent || "");
+    interviewStarted = false;
+
+    console.log(
+      `📝 Parsed ${interviewQuestions.length} questions from questionnaire`
+    );
+
     // Initialize room service
     const livekitUrl =
       process.env.LIVEKIT_URL?.replace("ws://", "http://").replace(
@@ -92,6 +102,7 @@ async function startAgent(
     return NextResponse.json({
       message: "Agent started successfully",
       isActive: true,
+      questionsCount: interviewQuestions.length,
     });
   } catch (error) {
     console.error("Failed to start agent:", error);
@@ -108,10 +119,136 @@ async function stopAgent() {
   currentAudioBuffer = null;
   selectedQuestionnaireId = null;
   selectedQuestionnaireContent = null;
+  interviewQuestions = [];
+  interviewStarted = false;
 
   console.log("🛑 Agent stopped");
 
   return NextResponse.json({ message: "Agent stopped" });
+}
+
+async function getAudio() {
+  if (!currentAudioBuffer) {
+    return NextResponse.json({ error: "No audio available" }, { status: 404 });
+  }
+
+  return new NextResponse(currentAudioBuffer, {
+    headers: {
+      "Content-Type": "audio/mpeg",
+      "Content-Length": currentAudioBuffer.length.toString(),
+    },
+  });
+}
+
+function parseQuestionnaire(content: string): string[] {
+  // Parse questionnaire content to extract questions
+  const lines = content
+    .split("\n")
+    .map(line => line.trim())
+    .filter(line => line);
+  const questions: string[] = [];
+
+  // Look for lines that start with quotes or contain question marks
+  for (const line of lines) {
+    // Extract text between quotes that contains questions
+    const quotedMatches = line.match(/"([^"]*\?[^"]*)"/g);
+    if (quotedMatches) {
+      quotedMatches.forEach(match => {
+        const question = match.replace(/"/g, "");
+        if (question.includes("?")) {
+          questions.push(question);
+        }
+      });
+    }
+
+    // Also look for direct questions without quotes
+    if (line.includes("?") && !line.includes('"')) {
+      // Clean up the line
+      const cleanLine = line
+        .replace(/^(Start with:|Then ask:|Finally ask:|Ask:)/i, "")
+        .trim();
+      if (cleanLine.includes("?")) {
+        questions.push(cleanLine);
+      }
+    }
+  }
+
+  // Fallback questions if none found
+  if (questions.length === 0) {
+    questions.push(
+      "Hello! Welcome to the interview. How are you doing today?",
+      "Can you tell me a bit about yourself?",
+      "What interests you most about this role?",
+      "Do you have any questions for me?"
+    );
+  }
+
+  console.log(`📝 Parsed questions:`, questions);
+  return questions;
+}
+
+async function startParticipantMonitoring() {
+  if (!isAgentActive) return;
+
+  try {
+    const rooms = await roomService.listRooms([agentRoomName]);
+    const room = rooms.find(r => r.name === agentRoomName);
+
+    if (room) {
+      const participants = room.numParticipants || 0;
+      console.log(`👥 Room has ${participants} participants`);
+
+      // Check if there are non-agent participants
+      const realParticipants =
+        room.participants?.filter(
+          (p: { identity: string }) => !p.identity.startsWith("agent-")
+        ) || [];
+
+      if (realParticipants.length > 0 && !interviewStarted) {
+        console.log(
+          `🎬 Starting interview with ${realParticipants.length} participants`
+        );
+        interviewStarted = true;
+        await startInterview();
+      }
+    }
+  } catch (error) {
+    console.error("Error monitoring participants:", error);
+  }
+
+  // Check again in 5 seconds
+  setTimeout(startParticipantMonitoring, 5000);
+}
+
+async function startInterview() {
+  console.log("🎬 Starting interview...");
+
+  if (interviewQuestions.length === 0) {
+    console.log("❌ No questions available for interview");
+    return;
+  }
+
+  // Ask each question with proper timing
+  for (let i = 0; i < interviewQuestions.length; i++) {
+    if (!isAgentActive) break;
+
+    const question = interviewQuestions[i];
+    console.log(
+      `🗣️ Agent asking question ${i + 1}/${interviewQuestions.length}: "${question}"`
+    );
+
+    await speakText(question);
+
+    // Wait for user response (simulated - in real implementation, use VAD)
+    const waitTime = Math.max(3000, question.length * 50); // Longer wait for longer questions
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+
+  // End interview
+  await speakText(
+    "Thank you for participating in this interview. Have a great day!"
+  );
+  console.log("✅ Interview completed");
 }
 
 async function speakText(text: string) {
@@ -120,13 +257,12 @@ async function speakText(text: string) {
   }
 
   try {
-    console.log(`🗣️  Agent speaking: "${text}"`);
+    console.log(`🗣️ Agent speaking: "${text}"`);
 
-    // Generate audio data
+    // Generate audio data using OpenAI TTS
+    const apiKey = process.env.OPENAI_API_KEY;
     let audioBuffer: Buffer;
 
-    // Check if we have OpenAI API key
-    const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey && !apiKey.includes("placeholder")) {
       // Generate real audio with OpenAI TTS
       const openai = new OpenAI({ apiKey });
@@ -170,109 +306,6 @@ async function speakText(text: string) {
   } catch (error) {
     console.error("Failed to speak:", error);
     return NextResponse.json({ error: "Failed to speak" }, { status: 500 });
-  }
-}
-
-async function getAudio() {
-  if (!currentAudioBuffer) {
-    return NextResponse.json({ error: "No audio available" }, { status: 404 });
-  }
-
-  return new NextResponse(currentAudioBuffer, {
-    headers: {
-      "Content-Type": "audio/mpeg",
-      "Content-Length": currentAudioBuffer.length.toString(),
-    },
-  });
-}
-
-async function startParticipantMonitoring() {
-  if (!isAgentActive) return;
-
-  try {
-    const rooms = await roomService.listRooms([agentRoomName]);
-    const room = rooms.find(r => r.name === agentRoomName);
-
-    if (room) {
-      const participants = room.numParticipants || 0;
-      console.log(`👥 Room has ${participants} participants`);
-
-      // Check if there are non-agent participants
-      const realParticipants =
-        room.participants?.filter(
-          (p: { identity: string }) => !p.identity.startsWith("agent-")
-        ) || [];
-
-      if (realParticipants.length > 0) {
-        console.log(
-          `🎬 Starting interview with ${realParticipants.length} participants`
-        );
-        await startInterview();
-      }
-    }
-  } catch (error) {
-    console.error("Error monitoring participants:", error);
-  }
-
-  // Check again in 5 seconds
-  setTimeout(startParticipantMonitoring, 5000);
-}
-
-async function startInterview() {
-  console.log("🎬 Starting interview...");
-
-  // Use questionnaire content if available, otherwise use default questions
-  if (selectedQuestionnaireContent) {
-    console.log(`📋 Using questionnaire content: ${selectedQuestionnaireId}`);
-
-    // Start with the greeting from the questionnaire
-    await speakText(
-      "Hello Robert or Lydia! Welcome to the Strella interview process."
-    );
-
-    // Wait for response (simulated)
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    // Ask the first question about next steps
-    await speakText(
-      "What are your thoughts on the next steps in the Strella interview process?"
-    );
-
-    // Wait for response
-    await new Promise(resolve => setTimeout(resolve, 4000));
-
-    // Ask about team contribution
-    await speakText("How do you see yourself contributing to our team?");
-
-    // Wait for response
-    await new Promise(resolve => setTimeout(resolve, 4000));
-
-    // Ask about their questions
-    await speakText(
-      "What questions do you have about the role and our company?"
-    );
-
-    // Wait for response
-    await new Promise(resolve => setTimeout(resolve, 4000));
-
-    // End the interview
-    await speakText(
-      "Thank you for participating in this Strella interview process. It was great getting to know you!"
-    );
-  } else {
-    // Fallback to default questions
-    const questions = [
-      "Hello! What's your age?",
-      "Tell me about yourself and your background.",
-      "What interests you most about software development?",
-      "Do you have any questions for me?",
-    ];
-
-    for (const question of questions) {
-      await speakText(question);
-      // Wait between questions
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
   }
 }
 
