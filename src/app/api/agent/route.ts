@@ -138,6 +138,13 @@ async function startAgent(
     // Start monitoring for participants
     startParticipantMonitoring();
 
+    // Also start the interview immediately for testing
+    if (interviewQuestions.length > 0 && !interviewStarted) {
+      console.log("🎬 Starting interview immediately for testing");
+      interviewStarted = true;
+      await startInterview();
+    }
+
     return NextResponse.json({
       message: "Agent started successfully",
       isActive: true,
@@ -181,33 +188,61 @@ async function getAudio() {
 
 function parseQuestionnaire(content: string): string[] {
   // Parse questionnaire content to extract questions
-  const lines = content
-    .split("\n")
-    .map(line => line.trim())
-    .filter(line => line);
   const questions: string[] = [];
 
-  // Look for lines that start with quotes or contain question marks
-  for (const line of lines) {
-    // Extract text between quotes that contains questions
-    const quotedMatches = line.match(/"([^"]*\?[^"]*)"/g);
-    if (quotedMatches) {
-      quotedMatches.forEach(match => {
-        const question = match.replace(/"/g, "");
-        if (question.includes("?")) {
-          questions.push(question);
+  // First, try to extract questions from quoted text
+  const quotedMatches = content.match(/"([^"]*\?[^"]*)"/g);
+  if (quotedMatches) {
+    quotedMatches.forEach(match => {
+      const question = match.replace(/"/g, "");
+      if (question.includes("?")) {
+        questions.push(question);
+      }
+    });
+  }
+
+  // If no quoted questions found, try to extract from numbered list format
+  if (questions.length === 0) {
+    // Look for patterns like "1. \"question?\" 2. \"question?\""
+    const numberedMatches = content.match(/\d+\.\s*"([^"]*\?[^"]*)"/g);
+    if (numberedMatches) {
+      numberedMatches.forEach(match => {
+        const questionMatch = match.match(/"([^"]*\?[^"]*)"/);
+        if (questionMatch) {
+          questions.push(questionMatch[1]);
         }
       });
     }
+  }
 
-    // Also look for direct questions without quotes
-    if (line.includes("?") && !line.includes('"')) {
-      // Clean up the line
-      const cleanLine = line
-        .replace(/^(Start with:|Then ask:|Finally ask:|Ask:)/i, "")
-        .trim();
-      if (cleanLine.includes("?")) {
-        questions.push(cleanLine);
+  // If still no questions found, try to extract from lines
+  if (questions.length === 0) {
+    const lines = content
+      .split("\n")
+      .map(line => line.trim())
+      .filter(line => line);
+
+    for (const line of lines) {
+      // Extract text between quotes that contains questions
+      const quotedMatches = line.match(/"([^"]*\?[^"]*)"/g);
+      if (quotedMatches) {
+        quotedMatches.forEach(match => {
+          const question = match.replace(/"/g, "");
+          if (question.includes("?")) {
+            questions.push(question);
+          }
+        });
+      }
+
+      // Also look for direct questions without quotes
+      if (line.includes("?") && !line.includes('"')) {
+        // Clean up the line
+        const cleanLine = line
+          .replace(/^(Start with:|Then ask:|Finally ask:|Ask:)/i, "")
+          .trim();
+        if (cleanLine.includes("?")) {
+          questions.push(cleanLine);
+        }
       }
     }
   }
@@ -222,7 +257,10 @@ function parseQuestionnaire(content: string): string[] {
     );
   }
 
-  console.log(`📝 Parsed questions:`, questions);
+  console.log(`📝 Parsed ${questions.length} questions:`, questions);
+  questions.forEach((q, i) => {
+    console.log(`  ${i + 1}. "${q}"`);
+  });
   return questions;
 }
 
