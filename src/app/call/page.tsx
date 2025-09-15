@@ -73,11 +73,6 @@ export default function CallPage() {
     };
   }, []);
 
-  // Load current prompt on mount
-  useEffect(() => {
-    loadCurrentPrompt();
-  }, [loadCurrentPrompt]);
-
   const loadCurrentPrompt = useCallback(async () => {
     try {
       const res = await fetch("/api/questionnaire-prompt-builder", {
@@ -92,6 +87,11 @@ export default function CallPage() {
       setPromptLoading(false);
     }
   }, []);
+
+  // Load current prompt on mount
+  useEffect(() => {
+    loadCurrentPrompt();
+  }, [loadCurrentPrompt]);
 
   async function savePrompt() {
     if (!promptContent.trim()) {
