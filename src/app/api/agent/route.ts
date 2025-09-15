@@ -7,6 +7,7 @@ import { Buffer } from "buffer";
 let isAgentActive = false;
 let agentRoomName = "";
 let roomService: RoomServiceClient;
+let currentAudioBuffer: Buffer | null = null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,8 @@ export async function POST(request: NextRequest) {
       return await stopAgent();
     } else if (action === "speak") {
       return await speakText(text);
+    } else if (action === "getAudio") {
+      return await getAudio();
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -87,6 +90,8 @@ async function startAgent(roomName: string) {
 async function stopAgent() {
   isAgentActive = false;
   agentRoomName = "";
+  currentAudioBuffer = null;
+
   console.log("🛑 Agent stopped");
 
   return NextResponse.json({ message: "Agent stopped" });
@@ -134,8 +139,8 @@ async function speakText(text: string) {
       );
     }
 
-    // For now, we'll simulate the agent speaking by logging
-    // In a real implementation, you'd need to publish this audio to the room
+    // Store audio buffer for browser to fetch
+    currentAudioBuffer = audioBuffer;
     console.log(`🔊 Agent says: "${text}"`);
     console.log(`📊 Audio data: ${audioBuffer.length} bytes`);
 
@@ -143,12 +148,25 @@ async function speakText(text: string) {
       message: "Speech generated successfully",
       text,
       audioSize: audioBuffer.length,
-      note: "Audio is generated but not yet published to room participants",
+      note: "Audio is available for browser to fetch",
     });
   } catch (error) {
     console.error("Failed to speak:", error);
     return NextResponse.json({ error: "Failed to speak" }, { status: 500 });
   }
+}
+
+async function getAudio() {
+  if (!currentAudioBuffer) {
+    return NextResponse.json({ error: "No audio available" }, { status: 404 });
+  }
+
+  return new NextResponse(currentAudioBuffer, {
+    headers: {
+      "Content-Type": "audio/mpeg",
+      "Content-Length": currentAudioBuffer.length.toString(),
+    },
+  });
 }
 
 async function startParticipantMonitoring() {

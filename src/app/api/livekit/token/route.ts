@@ -31,6 +31,41 @@ export async function POST(request: NextRequest) {
     const token = await createAccessToken(validatedData);
     const response = TokenResponse.parse({ token });
 
+    // Automatically start agent when someone joins a room
+    try {
+      const agentResponse = await fetch(
+        `${process.env.SERVER_ORIGIN || "http://localhost:3000"}/api/agent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomName: validatedData.roomName,
+            action: "start",
+          }),
+        }
+      );
+
+      if (agentResponse.ok) {
+        requestLogger.info(
+          { roomName: validatedData.roomName },
+          "Agent automatically started for room"
+        );
+      } else {
+        requestLogger.warn(
+          { roomName: validatedData.roomName, status: agentResponse.status },
+          "Failed to auto-start agent"
+        );
+      }
+    } catch (error) {
+      requestLogger.warn(
+        {
+          roomName: validatedData.roomName,
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        "Error auto-starting agent"
+      );
+    }
+
     const duration = Date.now() - startTime;
     requestLogger.info(
       {
