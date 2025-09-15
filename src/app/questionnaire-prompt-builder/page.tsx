@@ -37,7 +37,7 @@ export default function PromptBuilder() {
 
   async function loadPrompts() {
     try {
-      const res = await fetch("/api/questionnaire-prompt-builder", {
+      const res = await fetch("/api/questionnaire-prompt-builder?list=true", {
         cache: "no-store",
       });
       const json = await res.json();

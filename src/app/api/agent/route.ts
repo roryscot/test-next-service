@@ -138,13 +138,6 @@ async function startAgent(
     // Start monitoring for participants
     startParticipantMonitoring();
 
-    // Also start the interview immediately for testing
-    if (interviewQuestions.length > 0 && !interviewStarted) {
-      console.log("🎬 Starting interview immediately for testing");
-      interviewStarted = true;
-      await startInterview();
-    }
-
     return NextResponse.json({
       message: "Agent started successfully",
       isActive: true,
@@ -167,6 +160,7 @@ async function stopAgent() {
   selectedQuestionnaireContent = null;
   interviewQuestions = [];
   interviewStarted = false;
+  lastRealParticipantCount = 0;
 
   console.log("🛑 Agent stopped");
 
@@ -264,6 +258,9 @@ function parseQuestionnaire(content: string): string[] {
   return questions;
 }
 
+// Global state for participant tracking
+let lastRealParticipantCount = 0;
+
 async function startParticipantMonitoring() {
   if (!isAgentActive) return;
 
@@ -272,33 +269,62 @@ async function startParticipantMonitoring() {
     const room = rooms.find(r => r.name === agentRoomName);
 
     if (room) {
-      const participants = room.numParticipants || 0;
-      console.log(`👥 Room has ${participants} participants`);
-
-      // Check if there are non-agent participants
+      const currentParticipantCount = room.numParticipants || 0;
       const realParticipants =
         room.participants?.filter(
           (p: { identity: string }) => !p.identity.startsWith("agent-")
         ) || [];
+      const currentRealParticipantCount = realParticipants.length;
 
-      if (realParticipants.length > 0 && !interviewStarted) {
-        console.log(
-          `🎬 Starting interview with ${realParticipants.length} participants`
-        );
-        interviewStarted = true;
-        await startInterview();
+      console.log(
+        `👥 Room has ${currentParticipantCount} participants (${currentRealParticipantCount} real)`
+      );
+
+      // Check for participant changes
+      if (currentRealParticipantCount !== lastRealParticipantCount) {
+        if (currentRealParticipantCount > lastRealParticipantCount) {
+          // Participants joined
+          console.log(
+            `👋 ${currentRealParticipantCount - lastRealParticipantCount} participant(s) joined`
+          );
+          if (!interviewStarted && currentRealParticipantCount > 0) {
+            console.log(
+              `🎬 Starting interview with ${currentRealParticipantCount} participants`
+            );
+            interviewStarted = true;
+            await startInterview();
+          }
+        } else {
+          // Participants left
+          console.log(
+            `👋 ${lastRealParticipantCount - currentRealParticipantCount} participant(s) left`
+          );
+          if (currentRealParticipantCount === 0 && interviewStarted) {
+            console.log(`⏸️ All participants left, pausing interview`);
+            // Don't stop the interview completely, just pause it
+            // The interview will resume if participants rejoin
+          }
+        }
+        lastRealParticipantCount = currentRealParticipantCount;
       }
+
+      // Update total participant count
+      // lastParticipantCount = currentParticipantCount;
     }
   } catch (error) {
     console.error("Error monitoring participants:", error);
   }
 
-  // Check again in 5 seconds
-  setTimeout(startParticipantMonitoring, 5000);
+  // Check again in 3 seconds (more frequent for better responsiveness)
+  setTimeout(startParticipantMonitoring, 3000);
 }
 
 async function startInterview() {
   console.log("🎬 Starting interview...");
+  console.log(`📋 Interview questions (${interviewQuestions.length}):`);
+  interviewQuestions.forEach((q, i) => {
+    console.log(`  ${i + 1}. "${q}"`);
+  });
 
   if (interviewQuestions.length === 0) {
     console.log("❌ No questions available for interview");
@@ -318,6 +344,7 @@ async function startInterview() {
 
     // Wait for user response (simulated - in real implementation, use VAD)
     const waitTime = Math.max(3000, question.length * 50); // Longer wait for longer questions
+    console.log(`⏳ Waiting ${waitTime}ms for user response...`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
   }
 

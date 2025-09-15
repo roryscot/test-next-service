@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { PromptStore } from "@/lib/prompt-store";
-import { PromptRequest, PromptResponse } from "@/lib/schemas";
+import { PromptRequest, PromptResponse, PromptsResponse } from "@/lib/schemas";
 import { createErrorResponse } from "@/lib/errors";
 import { createRequestLogger } from "@/lib/logger";
 import { ZodError } from "zod";
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     // Check if this is a request for a specific prompt ID
     const url = new URL(request.url);
     const promptId = url.searchParams.get("id");
+    const listRequest = url.searchParams.get("list") === "true";
 
     if (promptId) {
       // Return specific prompt
@@ -53,6 +54,34 @@ export async function GET(request: NextRequest) {
           promptId,
         },
         "Specific prompt fetched successfully"
+      );
+
+      return Response.json(response, {
+        status: 200,
+        headers: {
+          "x-correlation-id": correlationId,
+        },
+      });
+    } else if (listRequest) {
+      // Return all prompts (for UI)
+      requestLogger.info(
+        { method: "GET", url: request.url },
+        "Fetching all prompts for UI"
+      );
+
+      const prompts = await PromptStore.read();
+      const response = PromptsResponse.parse({ prompts });
+
+      const duration = Date.now() - startTime;
+      requestLogger.info(
+        {
+          method: "GET",
+          url: request.url,
+          statusCode: 200,
+          duration,
+          count: prompts.length,
+        },
+        "All prompts fetched successfully for UI"
       );
 
       return Response.json(response, {
