@@ -42,6 +42,7 @@ export default function CallPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [agentAudioUrl, setAgentAudioUrl] = useState<string | null>(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LocalAudioTrack | null>(null);
   const audioCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
