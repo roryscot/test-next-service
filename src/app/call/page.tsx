@@ -36,8 +36,12 @@ export default function CallPage() {
   const [participants, setParticipants] = useState<string[]>([]);
   const [muted, setMuted] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  // State for user speech detection
+  const [isListening, setIsListening] = useState(false);
+  const [userSpeech, setUserSpeech] = useState<string>("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const [agentAudioUrl, setAgentAudioUrl] = useState<string | null>(null);
-  const [audioEnabled, setAudioEnabled] = useState(false);
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LocalAudioTrack | null>(null);
   const audioCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -49,7 +53,7 @@ export default function CallPage() {
         URL.revokeObjectURL(agentAudioUrl);
       }
     };
-  }, [agentAudioUrl]);
+  }, []);
 
   // Enable audio playback (required for browser autoplay policies)
   async function enableAudio() {
@@ -129,6 +133,27 @@ export default function CallPage() {
         refreshParticipants();
       });
 
+      // Handle track subscriptions for agent audio
+      room.on(RoomEvent.TrackSubscribed, (track, participant) => {
+        console.log(
+          `🎵 Track subscribed: ${track.kind} from ${participant.identity}`
+        );
+        if (track.kind === Track.Kind.Audio) {
+          // Check if this is from the AI agent
+          if (participant.identity.startsWith("agent-")) {
+            console.log(`🤖 Agent audio track subscribed: ${track.name}`);
+            const audioElement = track.attach();
+            audioElement.play().catch(error => {
+              console.log("Agent audio play failed:", error);
+            });
+          } else {
+            // Handle other participants' audio
+            const audioElement = track.attach();
+            audioElement.play();
+          }
+        }
+      });
+
       // Connect to room
       console.log("🔌 Connecting to LiveKit room...");
       console.log("🔍 Connection details:", {
@@ -151,7 +176,7 @@ export default function CallPage() {
       // Enable audio and start polling for agent audio
       await enableAudio();
 
-      // Start polling for agent audio (longer interval for LiveKit agent)
+      // Start polling for agent audio (hybrid approach with LiveKit coordination)
       audioCheckIntervalRef.current = setInterval(checkAndPlayAgentAudio, 5000);
     } catch (error) {
       console.error("❌ Connection failed:", error);
@@ -181,23 +206,108 @@ export default function CallPage() {
 
         setAgentAudioUrl(audioUrl);
 
-        // Play the audio and wait for it to finish
+        // Play the audio
         const audio = new Audio(audioUrl);
-
-        audio.addEventListener("ended", async () => {
-          console.log(
-            "🎵 Audio finished playing, waiting for next question..."
-          );
-          // In a proper LiveKit implementation, we would listen for new audio tracks
-          // For now, we'll continue polling but with a longer interval
-        });
-
         audio.play().catch(error => {
           console.log("Audio play failed:", error);
         });
+
+        console.log("🎵 Playing new agent audio");
+
+        // Start listening for user response after agent finishes speaking
+        audio.addEventListener("ended", () => {
+          console.log(
+            "🎵 Agent finished speaking, starting to listen for user..."
+          );
+          startListeningForUser();
+        });
+      } else if (response.status === 404) {
+        // No new audio available - this is normal, don't log as error
+        console.log("🔇 No new audio from agent (conversation in progress)");
+      } else {
+        console.log(`⚠️ Audio request failed: ${response.status}`);
       }
-    } catch {
-      // Silently ignore errors - agent might not have audio ready yet
+    } catch (error) {
+      console.log("Audio request error:", error);
+    }
+  }
+
+  async function startListeningForUser() {
+    try {
+      console.log("🎤 Starting to listen for user speech...");
+      setIsListening(true);
+
+      // Get user media
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        console.log("🎤 Recording stopped, processing user speech...");
+
+        // Create audio blob (for future STT processing)
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/wav",
+        });
+        console.log(`🎤 Recorded ${audioBlob.size} bytes of audio`);
+
+        // Send to agent for processing
+        await sendUserSpeechToAgent();
+
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+        setIsListening(false);
+      };
+
+      // Start recording
+      mediaRecorder.start();
+
+      // Stop recording after 5 seconds (simulate user speaking)
+      setTimeout(() => {
+        if (mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+        }
+      }, 5000);
+    } catch (error) {
+      console.error("Failed to start listening:", error);
+      setIsListening(false);
+    }
+  }
+
+  async function sendUserSpeechToAgent() {
+    try {
+      console.log("📤 Sending user speech to agent...");
+
+      // For now, simulate user response
+      const simulatedResponse = "I'm doing well, thank you for asking!";
+      setUserSpeech(simulatedResponse);
+
+      // Send user response to agent
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "userResponse",
+          transcript: simulatedResponse,
+        }),
+      });
+
+      if (response.ok) {
+        console.log("✅ User response sent to agent");
+      } else {
+        console.log("❌ Failed to send user response");
+      }
+    } catch (error) {
+      console.error("Error sending user speech:", error);
     }
   }
 
@@ -350,6 +460,16 @@ export default function CallPage() {
                       <span className="font-medium text-green-800">
                         Connected
                       </span>
+                      {isListening && (
+                        <span className="text-sm text-blue-500">
+                          🎤 Listening...
+                        </span>
+                      )}
+                      {userSpeech && (
+                        <span className="text-sm text-green-500">
+                          💬 &quot;{userSpeech}&quot;
+                        </span>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       {!audioEnabled && (

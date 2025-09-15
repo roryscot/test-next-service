@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { LiveKitAgent } from "@/lib/livekit-agent";
-import { Buffer } from "buffer";
+import { LiveKitConversationAgent } from "@/lib/livekit-conversation-agent";
 
 // Global state for agent
-let livekitAgent: LiveKitAgent | null = null;
-let currentAudioBuffer: Buffer | null = null;
+let conversationAgent: LiveKitConversationAgent | null = null;
 let interviewQuestions: string[] = [];
 
 export async function POST(request: NextRequest) {
@@ -23,7 +21,7 @@ export async function POST(request: NextRequest) {
     } else if (action === "startInterview") {
       return await startInterview();
     } else if (action === "userResponse") {
-      return await handleUserResponse();
+      return await handleUserResponse(body.transcript);
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -37,12 +35,12 @@ export async function POST(request: NextRequest) {
 }
 
 async function startAgent(roomName: string) {
-  if (livekitAgent) {
+  if (conversationAgent) {
     return NextResponse.json({ message: "Agent already active" });
   }
 
   try {
-    console.log(`🎤 Starting LiveKit agent for room: ${roomName}`);
+    console.log(`🎤 Starting LiveKit conversation agent for room: ${roomName}`);
 
     // Fetch the current prompt
     let currentPrompt = "";
@@ -70,64 +68,54 @@ async function startAgent(roomName: string) {
       `📝 Parsed ${interviewQuestions.length} questions from current prompt`
     );
 
-    // Create and start the LiveKit agent
-    livekitAgent = new LiveKitAgent();
-    await livekitAgent.start({
+    // Create and start the LiveKit conversation agent
+    conversationAgent = new LiveKitConversationAgent();
+    await conversationAgent.start({
       roomName,
       questions: interviewQuestions,
       onQuestionComplete: (questionIndex, question) => {
         console.log(
           `✅ Question ${questionIndex + 1} completed: "${question}"`
         );
-        // Generate audio for the question and store it for HTTP fallback
-        generateAudioForText(question).then(audioBuffer => {
-          currentAudioBuffer = audioBuffer;
-        });
       },
       onInterviewComplete: () => {
         console.log("🎉 Interview completed!");
-        const closingMessage =
-          "Thank you for participating in this interview. Have a great day!";
-        generateAudioForText(closingMessage).then(audioBuffer => {
-          currentAudioBuffer = audioBuffer;
-        });
       },
     });
 
     return NextResponse.json({
-      message: "LiveKit agent started successfully",
+      message: "LiveKit conversation agent started successfully",
       isActive: true,
       questionsCount: interviewQuestions.length,
     });
   } catch (error) {
-    console.error("Failed to start LiveKit agent:", error);
+    console.error("Failed to start LiveKit conversation agent:", error);
     return NextResponse.json(
-      { error: "Failed to start LiveKit agent" },
+      { error: "Failed to start LiveKit conversation agent" },
       { status: 500 }
     );
   }
 }
 
 async function stopAgent() {
-  if (livekitAgent) {
-    await livekitAgent.stop();
-    livekitAgent = null;
+  if (conversationAgent) {
+    await conversationAgent.stop();
+    conversationAgent = null;
   }
 
-  currentAudioBuffer = null;
   interviewQuestions = [];
 
-  console.log("🛑 LiveKit agent stopped");
+  console.log("🛑 LiveKit conversation agent stopped");
 
   return NextResponse.json({ message: "Agent stopped" });
 }
 
 async function getAudio() {
-  if (livekitAgent) {
-    const audioBuffer = livekitAgent.getCurrentAudio();
+  if (conversationAgent) {
+    const audioBuffer = conversationAgent.getCurrentAudio();
     if (audioBuffer) {
       console.log(
-        `🎵 Returning audio from LiveKit agent (${audioBuffer.length} bytes)`
+        `🎵 Returning audio from conversation agent (${audioBuffer.length} bytes)`
       );
       return new NextResponse(audioBuffer, {
         headers: {
@@ -138,58 +126,66 @@ async function getAudio() {
     }
   }
 
-  if (!currentAudioBuffer) {
-    return NextResponse.json({ error: "No audio available" }, { status: 404 });
+  // No audio available - return 404 to stop polling
+  console.log("🔇 No audio available from conversation agent");
+  return NextResponse.json({ error: "No audio available" }, { status: 404 });
+}
+
+async function speakText(text: string) {
+  if (!conversationAgent) {
+    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
   }
 
-  console.log(
-    `🎵 Returning fallback audio buffer (${currentAudioBuffer.length} bytes)`
-  );
+  try {
+    console.log(`🗣️ Agent speaking: "${text}"`);
+    await conversationAgent.askQuestion(text);
 
-  return new NextResponse(currentAudioBuffer, {
-    headers: {
-      "Content-Type": "audio/mpeg",
-      "Content-Length": currentAudioBuffer.length.toString(),
-    },
+    return NextResponse.json({
+      message: "Speech sent successfully",
+      text,
+    });
+  } catch (error) {
+    console.error("Failed to speak:", error);
+    return NextResponse.json({ error: "Failed to speak" }, { status: 500 });
+  }
+}
+
+async function startInterview() {
+  if (!conversationAgent) {
+    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
+  }
+
+  // The LiveKit conversation agent handles interview flow automatically
+  return NextResponse.json({
+    message: "Interview flow managed by LiveKit conversation agent",
+    questionsCount: interviewQuestions.length,
   });
 }
 
-async function generateAudioForText(text: string): Promise<Buffer> {
-  console.log(`🎵 Generating audio for: "${text}"`);
-
-  // Generate audio data using OpenAI TTS
-  const apiKey = process.env.OPENAI_API_KEY;
-  let audioBuffer: Buffer;
-
-  if (apiKey && !apiKey.includes("placeholder")) {
-    // Generate real audio with OpenAI TTS
-    const { OpenAI } = await import("openai");
-    const openai = new OpenAI({ apiKey });
-    const mp3 = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "alloy",
-      input: text,
-    });
-    audioBuffer = Buffer.from(await mp3.arrayBuffer());
-    console.log(`✅ Generated ${audioBuffer.length} bytes of real audio`);
-  } else {
-    // Generate simulated audio data
-    const duration = Math.max(2000, text.length * 100);
-    const sampleRate = 44100;
-    const samples = Math.floor((duration / 1000) * sampleRate);
-    const bufferSize = samples * 2; // 16-bit samples
-
-    audioBuffer = Buffer.alloc(bufferSize);
-    // Generate a simple sine wave
-    for (let i = 0; i < samples; i++) {
-      const sample = Math.sin((2 * Math.PI * 440 * i) / sampleRate) * 0.1;
-      const sampleValue = Math.floor(sample * 32767);
-      audioBuffer.writeInt16LE(sampleValue, i * 2);
-    }
-    console.log(`✅ Generated ${audioBuffer.length} bytes of simulated audio`);
+async function handleUserResponse(transcript?: string) {
+  if (!conversationAgent) {
+    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
   }
 
-  return audioBuffer;
+  try {
+    console.log(
+      `👂 Received user response: "${transcript || "No transcript provided"}"`
+    );
+
+    // Send the user response to the conversation agent
+    await conversationAgent.handleUserResponse(transcript || "User responded");
+
+    return NextResponse.json({
+      message: "User response processed successfully",
+      transcript,
+    });
+  } catch (error) {
+    console.error("Failed to handle user response:", error);
+    return NextResponse.json(
+      { error: "Failed to handle user response" },
+      { status: 500 }
+    );
+  }
 }
 
 function parseQuestionnaire(content: string): string[] {
@@ -269,54 +265,4 @@ function parseQuestionnaire(content: string): string[] {
     console.log(`  ${i + 1}. "${q}"`);
   });
   return questions;
-}
-
-async function speakText(text: string) {
-  if (!livekitAgent) {
-    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
-  }
-
-  try {
-    console.log(`🗣️ Agent speaking: "${text}"`);
-
-    // Generate audio and store it for HTTP fallback
-    const audioBuffer = await generateAudioForText(text);
-    currentAudioBuffer = audioBuffer;
-
-    return NextResponse.json({
-      message: "Speech generated successfully",
-      text,
-      audioSize: audioBuffer.length,
-      note: "Audio is available for browser to fetch",
-    });
-  } catch (error) {
-    console.error("Failed to generate speech:", error);
-    return NextResponse.json(
-      { error: "Failed to generate speech" },
-      { status: 500 }
-    );
-  }
-}
-
-async function startInterview() {
-  if (!livekitAgent) {
-    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
-  }
-
-  // The LiveKit agent handles interview flow automatically
-  return NextResponse.json({
-    message: "Interview flow managed by LiveKit agent",
-    questionsCount: interviewQuestions.length,
-  });
-}
-
-async function handleUserResponse() {
-  if (!livekitAgent) {
-    return NextResponse.json({ error: "Agent not active" }, { status: 400 });
-  }
-
-  // The LiveKit agent handles user responses automatically
-  return NextResponse.json({
-    message: "User response handling managed by LiveKit agent",
-  });
 }
