@@ -1,0 +1,88 @@
+@theme {
+  /* Color System - Neutrals */
+  --color-bg: #0f0f12;
+  --color-bg-secondary: #141419;
+  --color-card: #16161c;
+  --color-card-hover: #1c1c22;
+  --color-muted: #787882;
+  --color-muted-foreground: #64646e;
+  --color-fg: #ebebf0;
+  --color-fg-secondary: #c8c8d2;
+
+  /* Legacy variable names for compatibility */
+  --bg: var(--color-bg);
+  --fg: var(--color-fg);
+  --card-hover: var(--color-card-hover);
+
+  /* Color System - Brand */
+  --color-primary: #10b981;
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: #059669;
+  --color-primary-active: #047857;
+  --color-accent: #eab308;
+  --color-accent-foreground: #ffffff;
+  --color-accent-hover: #d97706;
+
+  /* Color System - Semantic */
+  --color-success: #22c55e;
+  --color-success-foreground: #ffffff;
+  --color-warn: #f59e0b;
+  --color-warn-foreground: #ffffff;
+  --color-danger: #ef4444;
+  --color-danger-foreground: #ffffff;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
+
+  /* Border System */
+  --color-border: rgb(255 255 255 / 0.1);
+  --color-border-hover: rgb(255 255 255 / 0.2);
+  --color-border-focus: rgb(16 185 129 / 0.5);
+
+  /* Radii */
+  --radius-sm: 0.375rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  --shadow-2xl: 0 50px 100px rgba(0, 0, 0, 0.25);
+
+  /* Animation */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: light) {
+  @theme {
+    /* Light mode overrides */
+    --color-bg: #f8f9fb;
+    --color-bg-secondary: #f1f3f7;
+    --color-card: #ffffff;
+    --color-card-hover: #f9fafc;
+    --color-muted: #6e6e78;
+    --color-muted-foreground: #5a5a64;
+    --color-fg: #141618;
+    --color-fg-secondary: #282d32;
+
+    --color-border: rgb(0 0 0 / 0.1);
+    --color-border-hover: rgb(0 0 0 / 0.2);
+
+    /* Legacy variable names for compatibility */
+    --bg: var(--color-bg);
+    --fg: var(--color-fg);
+    --card-hover: var(--color-card-hover);
+  }
+}
+
+:root {
+  color-scheme: dark light;
+}

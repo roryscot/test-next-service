@@ -1,89 +1,202 @@
-# interview-next-service
+# Interview System - Next.js Service
 
-> **Take-home assignment**  
-> Build a small Next.js (App Router) application that lets an interviewer compose a set of questions and then run a LiveKit audio call where an **AI agent** conducts the interview using those questions.
+A comprehensive interview system built with Next.js, LiveKit, and OpenAI Realtime API.
 
----
+## 🚀 Quick Start
 
-## 1 · Why this project?
+### Prerequisites
 
-We want to see how you:
+- Docker and Docker Compose
+- Node.js 18+
+- OpenAI API Key
 
-* reason about product requirements and developer experience  
-* structure a small but complete TypeScript/Next.js code-base  
-* integrate an LiveKit API ([LiveKit](https://livekit.io/))  
-* write clean, testable, well-documented code  
+### Environment Setup
 
----
+1. **Copy environment template:**
 
-## 2 · What you need to build
+   ```bash
+   cp .env.example .env.local
+   ```
 
-| Route | Purpose | Notes |
-|-------|---------|-------|
-| **`/questionnaire-prompt-builder`** | UI that lets the interviewer enter or edit a *single* prompt (free-text) | *Persist* on **Save** – you may choose an in-memory store, the file-system, or a database (e.g. SQLite/PostgreSQL). |
-| **`GET /api/questionnaire-prompt-builder`** | Returns `{ prompt: string }` | Consumed by the AI agent (see below). |
-| **`/call`** | Creates a LiveKit room and perform the interview | The agent fetches the prompt via the endpoint above and performs the interview. |
+2. **Set your OpenAI API key:**
+   ```bash
+   echo "OPENAI_API_KEY=your-api-key-here" >> .env.local
+   ```
 
-### LiveKit 
-Those LiveKit resources might be helpful:
-- LiveKit [docs](https://docs.livekit.io/home/) 
-- LiveKit Next.js [quickstart](https://docs.livekit.io/home/quickstarts/nextjs/)
+### Running the System
 
-
-### LiveKit AI Agent 
-
-We include a minimal livekit agent: [interview-strella-agent](http://github.com/corner3-ai/interview-strella-agent)
-
-* connects to the same LiveKit server as the browser client
-* requests the prompt from `/api/questionnaire-prompt-builder`
-
-
----
-
-## 4 · Getting started locally
-
-Run the development server:
+**Start all services:**
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker-compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Services:**
 
-Note that the provided agent expects `interview-next-service` to run on port `3000`
+- **Web Service**: http://localhost:3000
+- **LiveKit Server**: ws://localhost:7880
+- **PostgreSQL**: localhost:5432
+- **Redis**: localhost:6379
+- **Agent Service**: Running in background
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎯 Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Web Service
 
+- **Prompt Builder**: Create and save interview prompts
+- **Live Call Interface**: Join LiveKit rooms with audio
+- **Microphone Permission Handling**: Comprehensive permission management
+- **Real-time Participants**: See who's in the room
+- **Responsive UI**: Built with Tailwind CSS 4 and shadcn/ui
 
-## 5 · How to submit your work
+### Agent Service
 
-1. **Fork** this repository on GitHub.  
-2. In the fork, create a branch named `submission/<your-github-username>` off `main`.  
-3. **Keep the fork private** and grant *read* access to:  
-   * `@lhylton`  
-   * `@mr-robek`  
-4. Develop on that branch. When you’re satisfied, open a **pull request** in *your own fork* from `submission/<your-github-username>` → `main`.  
-   * In the PR description include:  
-     * a checklist of finished requirements  
-     * total time spent  
-     * any known trade-offs / TODOs  
-5. Tag the reviewers above so we get notified.    
-6. **Do not** open PRs against the public upstream repo; we review only in your private fork.
+- **OpenAI Realtime Integration**: Voice-powered AI interviewer
+- **LiveKit Participant Detection**: Waits for users to join
+- **Prompt-based Interviews**: Uses saved prompts for conversations
+- **Graceful Shutdown**: Proper cleanup and timeout handling
 
-⏱ **Suggested time budget**: 3–6 hours. Quality over scope!
+## 🧪 Testing
 
----
+### Manual Testing
 
-## 6 · Need help? Ask early!
+1. **Start the system**: `docker-compose up -d`
+2. **Open**: http://localhost:3000/call
+3. **Enter room**: `demo-room`
+4. **Connect**: Click "Connect to Room"
+5. **Agent**: Will automatically detect and start interview
 
-Please do not hesitate to reach out if you have any questions!
+### Automated Testing
 
-Good luck & have fun! 🚀
+```bash
+npm test
+```
+
+## 🔧 Development
+
+### Project Structure
+
+```
+src/
+├── app/                    # Next.js app router
+│   ├── api/               # API routes
+│   │   ├── livekit/      # LiveKit token generation
+│   │   └── questionnaire/ # Prompt management
+│   ├── call/             # Live call interface
+│   └── questionnaire-prompt-builder/ # Prompt creation
+├── components/            # React components
+│   └── ui/               # shadcn/ui components
+├── lib/                   # Utility functions
+└── middleware.ts         # Security headers & CSP
+```
+
+### Key Components
+
+**LiveKit Integration:**
+
+- Token generation with proper API keys
+- WebSocket connection handling
+- Audio track management
+- Participant tracking
+
+**Microphone Permissions:**
+
+- Permission state checking
+- User-friendly prompts
+- Graceful fallbacks
+- Browser compatibility
+
+**Security:**
+
+- Content Security Policy (CSP)
+- Permissions Policy
+- CORS handling
+- Request validation
+
+## 🐳 Docker Services
+
+### Web Service
+
+- **Port**: 3000
+- **Environment**: Development mode with hot reload
+- **Dependencies**: PostgreSQL, Redis
+
+### LiveKit Server
+
+- **Port**: 7880 (HTTP/WebSocket)
+- **Configuration**: Development mode with `devkey: secret`
+- **Features**: Room management, participant tracking
+
+### Agent Service
+
+- **Command**: `npx tsx src/interview-agent.ts demo-room interviewer-001`
+- **Integration**: OpenAI Realtime API
+- **Dependencies**: LiveKit, Web Service
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+**Connection Failed:**
+
+- Check if all services are running: `docker-compose ps`
+- Verify LiveKit server logs: `docker-compose logs livekit`
+- Ensure microphone permissions are granted
+
+**API Key Errors:**
+
+- Verify environment variables in docker-compose.yml
+- Check LiveKit server configuration in livekit.yaml
+- Ensure web service has correct API keys
+
+**CSP Blocking:**
+
+- Check middleware.ts for correct CSP configuration
+- Verify ws:// and wss:// are allowed in connect-src
+
+### Logs
+
+```bash
+# All services
+docker-compose logs
+
+# Specific service
+docker-compose logs web
+docker-compose logs livekit
+docker-compose logs agent
+```
+
+## 📚 API Reference
+
+### LiveKit Token Generation
+
+```http
+POST /api/livekit/token
+Content-Type: application/json
+
+{
+  "roomName": "demo-room",
+  "identity": "user-123"
+}
+```
+
+### Prompt Management
+
+```http
+GET /api/questionnaire-prompt-builder
+POST /api/questionnaire-prompt-builder
+```
+
+## 🚀 Production Deployment
+
+For production deployment:
+
+1. Update environment variables
+2. Configure proper SSL certificates
+3. Set up reverse proxy (nginx)
+4. Configure database backups
+5. Set up monitoring and logging
+
+## 📄 License
+
+MIT License - see LICENSE file for details.

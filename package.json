@@ -1,28 +1,68 @@
 {
   "name": "interview-next-service",
   "version": "0.1.0",
-  "private": true,
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -p 3000",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start -p 3000",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "agent": "ts-node src/agents/interview-strella-agent.ts demo-room",
+    "prepare": "husky",
+    "test": "playwright test",
+    "test:install": "playwright install",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:clean": "docker-compose down -v && docker system prune -f"
   },
   "dependencies": {
+    "@playwright/test": "^1.55.0",
+    "@upstash/ratelimit": "^2.0.6",
+    "@upstash/redis": "^1.35.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "livekit-client": "^2.13.3",
+    "livekit-server-sdk": "^2.13.3",
+    "lucide-react": "^0.544.0",
     "next": "15.3.2",
+    "openai": "^5.20.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@livekit/agents": "^0.3.0",
+    "@livekit/agents-plugin-openai": "^0.3.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.5",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
+    "node-fetch": "^3.3.2",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
