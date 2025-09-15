@@ -20,6 +20,7 @@ export class LiveKitAgent {
     question: string
   ) => void;
   private onInterviewComplete?: () => void;
+  private hasAskedCurrentQuestion = false;
 
   constructor() {
     const livekitUrl =
@@ -41,6 +42,7 @@ export class LiveKitAgent {
     this.roomName = config.roomName;
     this.questions = config.questions;
     this.currentQuestionIndex = 0;
+    this.hasAskedCurrentQuestion = false;
     this.onQuestionComplete = config.onQuestionComplete;
     this.onInterviewComplete = config.onInterviewComplete;
     this.isActive = true;
@@ -96,7 +98,8 @@ export class LiveKitAgent {
 
           if (
             realParticipants.length > 0 &&
-            this.currentQuestionIndex < this.questions.length
+            this.currentQuestionIndex < this.questions.length &&
+            !this.hasAskedCurrentQuestion
           ) {
             await this.askCurrentQuestion();
           }
@@ -140,13 +143,30 @@ export class LiveKitAgent {
       // Notify completion
       this.onQuestionComplete?.(this.currentQuestionIndex, question);
 
-      // Move to next question
-      this.currentQuestionIndex++;
+      // Mark that we've asked this question
+      this.hasAskedCurrentQuestion = true;
+
+      // Wait for user response before moving to next question
+      // In a real implementation, this would be triggered by user input detection
+      setTimeout(() => {
+        this.moveToNextQuestion();
+      }, 5000); // Wait 5 seconds for user response
     } catch (error) {
       console.error(
         `❌ Failed to ask question ${this.currentQuestionIndex + 1}:`,
         error
       );
+    }
+  }
+
+  private moveToNextQuestion(): void {
+    console.log(`⏭️ Moving to next question...`);
+    this.currentQuestionIndex++;
+    this.hasAskedCurrentQuestion = false;
+
+    // If there are more questions and participants are still in the room, ask the next question
+    if (this.currentQuestionIndex < this.questions.length) {
+      console.log(`🔄 Ready to ask question ${this.currentQuestionIndex + 1}`);
     }
   }
 
