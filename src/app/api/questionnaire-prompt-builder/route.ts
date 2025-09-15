@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { PromptStore } from "@/lib/prompt-store";
-import { PromptRequest, PromptsResponse } from "@/lib/schemas";
+import { PromptRequest, PromptResponse, PromptsResponse } from "@/lib/schemas";
 import { createErrorResponse } from "@/lib/errors";
 import { createRequestLogger } from "@/lib/logger";
 import { ZodError } from "zod";
@@ -20,29 +20,76 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    requestLogger.info({ method: "GET", url: request.url }, "Fetching prompts");
+    // Check if this is a request for a specific prompt ID
+    const url = new URL(request.url);
+    const promptId = url.searchParams.get("id");
 
-    const prompts = await PromptStore.read();
-    const response = PromptsResponse.parse({ prompts });
+    if (promptId) {
+      // Return specific prompt
+      requestLogger.info(
+        { method: "GET", url: request.url, promptId },
+        "Fetching specific prompt"
+      );
 
-    const duration = Date.now() - startTime;
-    requestLogger.info(
-      {
-        method: "GET",
-        url: request.url,
-        statusCode: 200,
-        duration,
-        count: prompts.length,
-      },
-      "Prompts fetched successfully"
-    );
+      const prompts = await PromptStore.read();
+      const prompt = prompts.find(p => p.id === promptId);
 
-    return Response.json(response, {
-      status: 200,
-      headers: {
-        "x-correlation-id": correlationId,
-      },
-    });
+      if (!prompt) {
+        return Response.json({ error: "Prompt not found" }, { status: 404 });
+      }
+
+      const response = PromptResponse.parse({
+        prompt: prompt.content,
+        title: prompt.title,
+      });
+
+      const duration = Date.now() - startTime;
+      requestLogger.info(
+        {
+          method: "GET",
+          url: request.url,
+          statusCode: 200,
+          duration,
+          promptId,
+        },
+        "Specific prompt fetched successfully"
+      );
+
+      return Response.json(response, {
+        status: 200,
+        headers: {
+          "x-correlation-id": correlationId,
+        },
+      });
+    } else {
+      // Return all prompts (new behavior)
+      requestLogger.info(
+        { method: "GET", url: request.url },
+        "Fetching all prompts"
+      );
+
+      const prompts = await PromptStore.read();
+      const response = PromptsResponse.parse({ prompts });
+
+      const duration = Date.now() - startTime;
+      requestLogger.info(
+        {
+          method: "GET",
+          url: request.url,
+          statusCode: 200,
+          duration,
+          count: prompts.length,
+        },
+        "All prompts fetched successfully"
+      );
+
+      return Response.json(response, {
+        status: 200,
+        headers: {
+          "x-correlation-id": correlationId,
+        },
+      });
+    }
   } catch (error) {
     const duration = Date.now() - startTime;
     requestLogger.error(

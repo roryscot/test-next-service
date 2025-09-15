@@ -57,6 +57,29 @@ async function startAgent(
 
     if (selectedQuestionnaireId) {
       console.log(`📋 Using questionnaire: ${selectedQuestionnaireId}`);
+
+      // Fetch the actual prompt content from the questionnaire-prompt-builder endpoint
+      try {
+        const promptResponse = await fetch(
+          `${process.env.SERVER_ORIGIN || "http://localhost:3000"}/api/questionnaire-prompt-builder?id=${selectedQuestionnaireId}`
+        );
+        if (promptResponse.ok) {
+          const promptData = await promptResponse.json();
+          selectedQuestionnaireContent = promptData.prompt;
+          console.log(
+            `📝 Fetched prompt content from questionnaire-prompt-builder: ${selectedQuestionnaireContent?.substring(0, 100)}...`
+          );
+        } else {
+          console.log(
+            `⚠️ Failed to fetch prompt from questionnaire-prompt-builder, using provided content`
+          );
+        }
+      } catch (error) {
+        console.log(
+          `⚠️ Error fetching prompt from questionnaire-prompt-builder:`,
+          error
+        );
+      }
     }
 
     // Parse questionnaire content to extract questions
