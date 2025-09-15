@@ -2,7 +2,7 @@
 import { PropsWithChildren } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Mic, Home } from "lucide-react";
+import { Mic, Home } from "lucide-react";
 import clsx from "clsx";
 
 export function AppShell({
@@ -13,12 +13,7 @@ export function AppShell({
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
-    {
-      href: "/questionnaire-prompt-builder",
-      label: "Prompt Builder",
-      icon: FileText,
-    },
-    { href: "/call", label: "Call", icon: Mic },
+    { href: "/call", label: "Interview", icon: Mic },
   ];
 
   return (

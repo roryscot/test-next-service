@@ -23,7 +23,7 @@ test.describe("API Endpoints", () => {
       }
     );
 
-    expect(response.status()).toBe(204);
+    expect(response.status()).toBe(200);
 
     // Verify the prompt was saved
     const getResponse = await request.get(

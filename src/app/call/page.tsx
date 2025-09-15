@@ -16,7 +16,19 @@ import {
 } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Mic, MicOff, Phone, PhoneOff, Users, Hash, User } from "lucide-react";
+import { Textarea } from "@/components/ui/Textarea";
+import {
+  Mic,
+  MicOff,
+  Phone,
+  PhoneOff,
+  Users,
+  Hash,
+  User,
+  FileText,
+  Save,
+} from "lucide-react";
+import { toast } from "sonner";
 
 // Extend Window interface to include our permission request resolve function
 declare global {
@@ -43,6 +55,11 @@ export default function CallPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const [agentAudioUrl, setAgentAudioUrl] = useState<string | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
+  // Prompt builder state
+  const [promptTitle, setPromptTitle] = useState("");
+  const [promptContent, setPromptContent] = useState("");
+  const [promptLoading, setPromptLoading] = useState(true);
+  const [promptSaving, setPromptSaving] = useState(false);
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LocalAudioTrack | null>(null);
   const audioCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,6 +72,55 @@ export default function CallPage() {
       }
     };
   }, []);
+
+  // Load current prompt on mount
+  useEffect(() => {
+    loadCurrentPrompt();
+  }, []);
+
+  async function loadCurrentPrompt() {
+    try {
+      const res = await fetch("/api/questionnaire-prompt-builder", {
+        cache: "no-store",
+      });
+      const json = await res.json();
+      setPromptTitle(json.title || "");
+      setPromptContent(json.prompt || "");
+    } catch {
+      toast.error("Failed to load current prompt");
+    } finally {
+      setPromptLoading(false);
+    }
+  }
+
+  async function savePrompt() {
+    if (!promptContent.trim()) {
+      toast.error("Please enter a prompt");
+      return;
+    }
+
+    setPromptSaving(true);
+    try {
+      const res = await fetch("/api/questionnaire-prompt-builder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: promptTitle.trim() || "Current Interview Prompt",
+          prompt: promptContent.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Prompt saved successfully!");
+      } else {
+        toast.error("Failed to save prompt");
+      }
+    } catch {
+      toast.error("Failed to save prompt");
+    } finally {
+      setPromptSaving(false);
+    }
+  }
 
   // Enable audio playback (required for browser autoplay policies)
   async function enableAudio() {
@@ -566,6 +632,92 @@ export default function CallPage() {
                   </Card>
                 </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Prompt Builder Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <CardTitle className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-2xl font-bold text-transparent">
+                  Interview Setup
+                </CardTitle>
+                <CardDescription className="mt-1 text-gray-600">
+                  Configure the AI interviewer&apos;s behavior and questions
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {promptLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
+                <span className="ml-2 text-gray-600">Loading prompt...</span>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="text-fg mb-2 block text-sm font-medium">
+                    Interview Title
+                  </label>
+                  <Input
+                    value={promptTitle}
+                    onChange={e => setPromptTitle(e.target.value)}
+                    placeholder="Enter interview title (e.g., Technical Interview, Behavioral Assessment)"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-fg mb-2 block text-sm font-medium">
+                    Interview Prompt & Questions
+                  </label>
+                  <Textarea
+                    value={promptContent}
+                    onChange={e => setPromptContent(e.target.value)}
+                    placeholder="Enter your interview prompt and questions here...
+
+Example:
+You are a friendly AI interviewer conducting a technical interview.
+
+Start with: 'Hello! Welcome to the interview. How are you doing today?'
+
+Then ask these questions:
+1. 'Can you tell me about your experience with React?'
+2. 'How do you handle state management in large applications?'
+3. 'What's your approach to testing frontend components?'
+4. 'Do you have any questions about the role or our team?'
+
+Be conversational and encouraging throughout the interview."
+                    rows={12}
+                    className="resize-none"
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    This prompt will be used by the AI interviewer to conduct
+                    interviews. Include specific questions, greetings, and
+                    instructions for the interviewer. The AI will ask each
+                    question and wait for your response before moving to the
+                    next one.
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={savePrompt}
+                    disabled={promptSaving || !promptContent.trim()}
+                    loading={promptSaving}
+                    icon={<Save className="h-4 w-4" />}
+                    iconPosition="left"
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-xl"
+                  >
+                    {promptSaving ? "Saving..." : "Save Interview Setup"}
+                  </Button>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

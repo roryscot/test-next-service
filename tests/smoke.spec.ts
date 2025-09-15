@@ -10,23 +10,22 @@ test.describe("Interview Next Service", () => {
     await expect(page).toHaveTitle(/Interview/);
   });
 
-  test("should navigate to questionnaire prompt builder", async ({ page }) => {
-    await page.goto("http://localhost:3000/questionnaire-prompt-builder");
+  test("should show prompt builder on call page", async ({ page }) => {
+    await page.goto("http://localhost:3000/call");
 
     // Check if the page loads correctly
     await expect(page.locator('h1, [data-testid="title"]')).toContainText(
-      /Questionnaire|Prompt|Builder/
+      /Interview|Call/
     );
 
-    // Check if textarea is present
+    // Check if prompt builder section is present
+    await expect(page.locator("text=Interview Setup")).toBeVisible();
     await expect(page.locator("textarea")).toBeVisible();
-
-    // Check if save button is present
     await expect(page.locator('button:has-text("Save")')).toBeVisible();
   });
 
   test("should save and load prompt", async ({ page }) => {
-    await page.goto("http://localhost:3000/questionnaire-prompt-builder");
+    await page.goto("http://localhost:3000/call");
 
     const testPrompt = "Test interview prompt for Playwright testing";
 
@@ -61,8 +60,10 @@ test.describe("Interview Next Service", () => {
       page.locator('input[placeholder*="room"], input[placeholder*="Room"]')
     ).toBeVisible();
 
-    // Check if connect button is present
-    await expect(page.locator('button:has-text("Connect")')).toBeVisible();
+    // Check if start interview button is present
+    await expect(
+      page.locator('button:has-text("Start AI Interview")')
+    ).toBeVisible();
   });
 
   test("should show connection status on call page", async ({ page }) => {
