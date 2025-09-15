@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRequestLogger } from "@/lib/logger";
 import { ZodError } from "zod";
 import { z } from "zod";
+import { PromptStore } from "@/lib/prompt-store";
 
 // Generate correlation ID for request tracking
 function getCorrelationId(request: NextRequest): string {
@@ -31,71 +32,6 @@ export type QuestionnairesResponse = z.infer<
   typeof QuestionnairesResponseSchema
 >;
 
-// Mock data for now - in production this would come from a database
-const mockQuestionnaires: Questionnaire[] = [
-  {
-    id: "strella-interview",
-    name: "Strella Interview Process",
-    description:
-      "Custom questionnaire for Strella interview process with Robert or Lydia",
-    content: `You are a friendly AI interviewer conducting a Strella interview process.
-
-Start with: "Hello Robert or Lydia! Welcome to the Strella interview process."
-
-Wait for their response, then ask these questions about next steps:
-
-1. "What are your thoughts on the next steps in the Strella interview process?"
-2. "How do you see yourself contributing to our team?"
-3. "What questions do you have about the role and our company?"
-
-Be conversational and encouraging throughout the interview.`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "technical-interview",
-    name: "Technical Interview",
-    description: "Focused on technical skills and problem-solving",
-    content: `You are a technical interviewer assessing programming and problem-solving skills.
-
-Start with: "Hi! I'm here to discuss your technical background and work through some problems together."
-
-Focus on:
-- Programming languages and frameworks
-- System design concepts
-- Problem-solving approach
-- Code quality and best practices
-- Learning and adaptation
-
-Ask technical questions appropriate to their level, and be supportive while challenging them appropriately.
-
-End with: "Great work today! Thank you for walking through those problems with me."`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "behavioral-interview",
-    name: "Behavioral Interview",
-    description: "STAR method questions about past experiences",
-    content: `You are conducting a behavioral interview using the STAR method (Situation, Task, Action, Result).
-
-Start with: "Hello! Today I'd like to learn about your past experiences and how you've handled various situations."
-
-Ask about:
-- Leadership experiences
-- Challenges overcome
-- Team conflicts resolved
-- Achievements and failures
-- Decision-making processes
-
-Use follow-up questions to get specific details about situations, tasks, actions taken, and results achieved.
-
-End with: "Thank you for sharing those detailed examples. It really helps me understand your experience."`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 export async function GET(request: NextRequest) {
   const correlationId = getCorrelationId(request);
   const requestLogger = createRequestLogger(correlationId);
@@ -107,8 +43,21 @@ export async function GET(request: NextRequest) {
       "Fetching questionnaires"
     );
 
+    // Get saved prompts from PromptStore
+    const savedPrompts = await PromptStore.read();
+
+    // Convert saved prompts to questionnaire format
+    const questionnaires = savedPrompts.map(prompt => ({
+      id: prompt.id,
+      name: prompt.title,
+      description: `Custom questionnaire: ${prompt.title}`,
+      content: prompt.content,
+      createdAt: prompt.createdAt,
+      updatedAt: prompt.updatedAt,
+    }));
+
     const response = QuestionnairesResponseSchema.parse({
-      questionnaires: mockQuestionnaires,
+      questionnaires,
     });
 
     const duration = Date.now() - startTime;
@@ -118,7 +67,7 @@ export async function GET(request: NextRequest) {
         url: request.url,
         statusCode: 200,
         duration,
-        count: mockQuestionnaires.length,
+        count: questionnaires.length,
       },
       "Questionnaires fetched successfully"
     );

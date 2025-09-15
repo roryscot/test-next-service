@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { PromptStore } from "@/lib/prompt-store";
-import { PromptRequest, PromptResponse } from "@/lib/schemas";
+import { PromptRequest, PromptsResponse } from "@/lib/schemas";
 import { createErrorResponse } from "@/lib/errors";
 import { createRequestLogger } from "@/lib/logger";
 import { ZodError } from "zod";
@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    requestLogger.info({ method: "GET", url: request.url }, "Fetching prompt");
+    requestLogger.info({ method: "GET", url: request.url }, "Fetching prompts");
 
-    const rec = await PromptStore.read();
-    const response = PromptResponse.parse(rec);
+    const prompts = await PromptStore.read();
+    const response = PromptsResponse.parse({ prompts });
 
     const duration = Date.now() - startTime;
     requestLogger.info(
@@ -32,8 +32,9 @@ export async function GET(request: NextRequest) {
         url: request.url,
         statusCode: 200,
         duration,
+        count: prompts.length,
       },
-      "Prompt fetched successfully"
+      "Prompts fetched successfully"
     );
 
     return Response.json(response, {
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
         duration,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      "Failed to fetch prompt"
+      "Failed to fetch prompts"
     );
 
     return createErrorResponse(error, 500);

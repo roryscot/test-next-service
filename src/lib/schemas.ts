@@ -7,10 +7,29 @@ export const PromptRequest = z.object({
     .string()
     .min(10, "Prompt must be at least 10 characters")
     .max(10000, "Prompt must be less than 10,000 characters"),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(100, "Title must be less than 100 characters")
+    .optional(),
 });
 
 export const PromptResponse = z.object({
   prompt: z.string(),
+  title: z.string().optional(),
+});
+
+// Multiple prompts response schema
+export const PromptsResponse = z.object({
+  prompts: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      content: z.string(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+    })
+  ),
 });
 
 // LiveKit token schemas
@@ -49,6 +68,7 @@ export const EnvSchema = z.object({
 // Type exports
 export type PromptRequestT = z.infer<typeof PromptRequest>;
 export type PromptResponseT = z.infer<typeof PromptResponse>;
+export type PromptsResponseT = z.infer<typeof PromptsResponse>;
 export type TokenRequestT = z.infer<typeof TokenRequest>;
 export type TokenResponseT = z.infer<typeof TokenResponse>;
 export type LiveKitUrlResponseT = z.infer<typeof LiveKitUrlResponse>;

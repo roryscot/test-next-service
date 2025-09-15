@@ -1,12 +1,12 @@
-<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="5.7015720000000005">
-<testsuite name="questionnaire-system.spec.ts" timestamp="2025-09-15T00:58:12.813Z" hostname="chromium" tests="4" failures="0" skipped="0" time="7.975" errors="0">
-<testcase name="Questionnaire System Tests › should create and use custom questionnaire" classname="questionnaire-system.spec.ts" time="4.439">
+<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="7.506242">
+<testsuite name="questionnaire-system.spec.ts" timestamp="2025-09-15T01:08:23.405Z" hostname="chromium" tests="4" failures="0" skipped="0" time="10.577" errors="0">
+<testcase name="Questionnaire System Tests › should create and use custom questionnaire" classname="questionnaire-system.spec.ts" time="4.821">
 </testcase>
-<testcase name="Questionnaire System Tests › should test questionnaire API endpoints" classname="questionnaire-system.spec.ts" time="0.612">
+<testcase name="Questionnaire System Tests › should test questionnaire API endpoints" classname="questionnaire-system.spec.ts" time="1.088">
 </testcase>
-<testcase name="Questionnaire System Tests › should test agent API with questionnaire data" classname="questionnaire-system.spec.ts" time="1.266">
+<testcase name="Questionnaire System Tests › should test agent API with questionnaire data" classname="questionnaire-system.spec.ts" time="2.257">
 </testcase>
-<testcase name="Questionnaire System Tests › should verify questionnaire UI elements" classname="questionnaire-system.spec.ts" time="1.658">
+<testcase name="Questionnaire System Tests › should verify questionnaire UI elements" classname="questionnaire-system.spec.ts" time="2.411">
 </testcase>
 </testsuite>
 </testsuites>
