@@ -61,14 +61,17 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: strella_web
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/interview_strella?schema=public
       - NEXTAUTH_SECRET=your-secret-key-here
       - NEXTAUTH_URL=http://localhost:3000
-      - LIVEKIT_URL=ws://localhost:7880
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=secret
+      - LIVEKIT_URL=${LIVEKIT_URL}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
       - "3000:3000"
     volumes:
