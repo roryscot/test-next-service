@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Room,
   RoomEvent,
@@ -76,9 +76,9 @@ export default function CallPage() {
   // Load current prompt on mount
   useEffect(() => {
     loadCurrentPrompt();
-  }, []);
+  }, [loadCurrentPrompt]);
 
-  async function loadCurrentPrompt() {
+  const loadCurrentPrompt = useCallback(async () => {
     try {
       const res = await fetch("/api/questionnaire-prompt-builder", {
         cache: "no-store",
@@ -91,7 +91,7 @@ export default function CallPage() {
     } finally {
       setPromptLoading(false);
     }
-  }
+  }, []);
 
   async function savePrompt() {
     if (!promptContent.trim()) {
