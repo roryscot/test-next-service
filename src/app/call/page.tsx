@@ -637,18 +637,32 @@ export default function CallPage() {
         </Card>
 
         {/* Prompt Builder Section */}
-        <Card>
+        <Card className={status === "connected" ? "opacity-60" : ""}>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-xl shadow-lg ${
+                  status === "connected"
+                    ? "bg-gradient-to-br from-gray-400 to-gray-500"
+                    : "bg-gradient-to-br from-green-500 to-emerald-600"
+                }`}
+              >
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <div>
-                <CardTitle className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-2xl font-bold text-transparent">
+                <CardTitle
+                  className={`bg-clip-text text-2xl font-bold text-transparent ${
+                    status === "connected"
+                      ? "bg-gradient-to-r from-gray-500 to-gray-600"
+                      : "bg-gradient-to-r from-green-600 to-emerald-600"
+                  }`}
+                >
                   Interview Setup
                 </CardTitle>
                 <CardDescription className="mt-1 text-gray-600">
-                  Configure the AI interviewer&apos;s behavior and questions
+                  {status === "connected"
+                    ? "Interview is active - setup is locked during the call"
+                    : "Configure the AI interviewer's behavior and questions"}
                 </CardDescription>
               </div>
             </div>
@@ -669,6 +683,7 @@ export default function CallPage() {
                     value={promptTitle}
                     onChange={e => setPromptTitle(e.target.value)}
                     placeholder="Enter interview title (e.g., Technical Interview, Behavioral Assessment)"
+                    disabled={status === "connected"}
                   />
                 </div>
 
@@ -695,26 +710,37 @@ Then ask these questions:
 Be conversational and encouraging throughout the interview."
                     rows={12}
                     className="resize-none"
+                    disabled={status === "connected"}
                   />
                   <p className="mt-2 text-sm text-gray-500">
-                    This prompt will be used by the AI interviewer to conduct
-                    interviews. Include specific questions, greetings, and
-                    instructions for the interviewer. The AI will ask each
-                    question and wait for your response before moving to the
-                    next one.
+                    {status === "connected"
+                      ? "Interview is currently active. Setup will be available after the call ends."
+                      : "This prompt will be used by the AI interviewer to conduct interviews. Include specific questions, greetings, and instructions for the interviewer. The AI will ask each question and wait for your response before moving to the next one."}
                   </p>
                 </div>
 
                 <div className="flex justify-end">
                   <Button
                     onClick={savePrompt}
-                    disabled={promptSaving || !promptContent.trim()}
+                    disabled={
+                      promptSaving ||
+                      !promptContent.trim() ||
+                      status === "connected"
+                    }
                     loading={promptSaving}
                     icon={<Save className="h-4 w-4" />}
                     iconPosition="left"
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-xl"
+                    className={`px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 ${
+                      status === "connected"
+                        ? "cursor-not-allowed bg-gray-400"
+                        : "bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-xl"
+                    }`}
                   >
-                    {promptSaving ? "Saving..." : "Save Interview Setup"}
+                    {promptSaving
+                      ? "Saving..."
+                      : status === "connected"
+                        ? "Setup Locked During Call"
+                        : "Save Interview Setup"}
                   </Button>
                 </div>
               </>
