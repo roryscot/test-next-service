@@ -55,6 +55,25 @@ async function startAgent(
     selectedQuestionnaireId = questionnaireId || null;
     selectedQuestionnaireContent = questionnaireContent || null;
 
+    // Fetch the main interview prompt for overall behavior
+    let mainPrompt = "";
+    try {
+      const mainPromptResponse = await fetch(
+        `${process.env.SERVER_ORIGIN || "http://localhost:3000"}/api/questionnaire-prompt-builder`
+      );
+      if (mainPromptResponse.ok) {
+        const mainPromptData = await mainPromptResponse.json();
+        mainPrompt = mainPromptData.prompt;
+        console.log(
+          `📋 Fetched main interview prompt: ${mainPrompt.substring(0, 100)}...`
+        );
+      } else {
+        console.log(`⚠️ Failed to fetch main prompt, using default behavior`);
+      }
+    } catch (error) {
+      console.log(`⚠️ Error fetching main prompt:`, error);
+    }
+
     if (selectedQuestionnaireId) {
       console.log(`📋 Using questionnaire: ${selectedQuestionnaireId}`);
 
@@ -67,18 +86,15 @@ async function startAgent(
           const promptData = await promptResponse.json();
           selectedQuestionnaireContent = promptData.prompt;
           console.log(
-            `📝 Fetched prompt content from questionnaire-prompt-builder: ${selectedQuestionnaireContent?.substring(0, 100)}...`
+            `📝 Fetched questionnaire content: ${selectedQuestionnaireContent?.substring(0, 100)}...`
           );
         } else {
           console.log(
-            `⚠️ Failed to fetch prompt from questionnaire-prompt-builder, using provided content`
+            `⚠️ Failed to fetch questionnaire content, using provided content`
           );
         }
       } catch (error) {
-        console.log(
-          `⚠️ Error fetching prompt from questionnaire-prompt-builder:`,
-          error
-        );
+        console.log(`⚠️ Error fetching questionnaire content:`, error);
       }
     }
 
@@ -282,6 +298,20 @@ async function speakText(text: string) {
   try {
     console.log(`🗣️ Agent speaking: "${text}"`);
 
+    // Fetch the main prompt for context-aware speech generation
+    let mainPrompt = "";
+    try {
+      const mainPromptResponse = await fetch(
+        `${process.env.SERVER_ORIGIN || "http://localhost:3000"}/api/questionnaire-prompt-builder`
+      );
+      if (mainPromptResponse.ok) {
+        const mainPromptData = await mainPromptResponse.json();
+        mainPrompt = mainPromptData.prompt;
+      }
+    } catch (error) {
+      console.log(`⚠️ Error fetching main prompt for speech:`, error);
+    }
+
     // Generate audio data using OpenAI TTS
     const apiKey = process.env.OPENAI_API_KEY;
     let audioBuffer: Buffer;
@@ -319,12 +349,18 @@ async function speakText(text: string) {
     currentAudioBuffer = audioBuffer;
     console.log(`🔊 Agent says: "${text}"`);
     console.log(`📊 Audio data: ${audioBuffer.length} bytes`);
+    if (mainPrompt) {
+      console.log(
+        `📋 Using main prompt context: ${mainPrompt.substring(0, 50)}...`
+      );
+    }
 
     return NextResponse.json({
       message: "Speech generated successfully",
       text,
       audioSize: audioBuffer.length,
       note: "Audio is available for browser to fetch",
+      mainPromptUsed: !!mainPrompt,
     });
   } catch (error) {
     console.error("Failed to speak:", error);

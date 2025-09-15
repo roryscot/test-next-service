@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { PromptStore } from "@/lib/prompt-store";
-import { PromptRequest, PromptResponse, PromptsResponse } from "@/lib/schemas";
+import { PromptRequest, PromptResponse } from "@/lib/schemas";
 import { createErrorResponse } from "@/lib/errors";
 import { createRequestLogger } from "@/lib/logger";
 import { ZodError } from "zod";
@@ -62,14 +62,26 @@ export async function GET(request: NextRequest) {
         },
       });
     } else {
-      // Return all prompts (new behavior)
+      // Return main/default prompt (legacy behavior for agent consumption)
       requestLogger.info(
         { method: "GET", url: request.url },
-        "Fetching all prompts"
+        "Fetching main prompt"
       );
 
       const prompts = await PromptStore.read();
-      const response = PromptsResponse.parse({ prompts });
+      const mainPrompt = prompts.find(p => p.id === "default") || prompts[0];
+
+      if (!mainPrompt) {
+        return Response.json(
+          { error: "No prompts available" },
+          { status: 404 }
+        );
+      }
+
+      const response = PromptResponse.parse({
+        prompt: mainPrompt.content,
+        title: mainPrompt.title,
+      });
 
       const duration = Date.now() - startTime;
       requestLogger.info(
@@ -78,9 +90,9 @@ export async function GET(request: NextRequest) {
           url: request.url,
           statusCode: 200,
           duration,
-          count: prompts.length,
+          promptId: mainPrompt.id,
         },
-        "All prompts fetched successfully"
+        "Main prompt fetched successfully"
       );
 
       return Response.json(response, {
