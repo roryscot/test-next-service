@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+import { serverEnv } from "@/lib/env";
 
 export async function GET() {
   try {
-    // Use ws:// for localhost development to avoid SSL issues
-    // The LiveKit client should handle this properly in development mode
-    const livekitUrl = "ws://localhost:7880";
+    // Use the LiveKit URL from environment variables
+    const livekitUrl = serverEnv.LIVEKIT_URL;
 
     return NextResponse.json({ url: livekitUrl });
   } catch (error) {
