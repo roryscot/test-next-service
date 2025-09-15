@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 2
+      "actualWorkers": 4
     },
     "preserveOutput": "always",
     "reporter": [
@@ -40,7 +40,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 4
         },
         "id": "chromium",
         "name": "chromium",
@@ -54,7 +54,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 4
         },
         "id": "firefox",
         "name": "firefox",
@@ -68,7 +68,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 4
         },
         "id": "webkit",
         "name": "webkit",
@@ -82,7 +82,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 4
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -96,7 +96,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 4
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
@@ -115,20 +115,20 @@
   },
   "suites": [
     {
-      "title": "browser-audio-debug.spec.ts",
-      "file": "browser-audio-debug.spec.ts",
+      "title": "questionnaire-system.spec.ts",
+      "file": "questionnaire-system.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Browser Audio Debugging",
-          "file": "browser-audio-debug.spec.ts",
+          "title": "Questionnaire System Tests",
+          "file": "questionnaire-system.spec.ts",
           "line": 3,
           "column": 6,
           "specs": [
             {
-              "title": "should debug audio streaming from agent to browser",
+              "title": "should create and use custom questionnaire",
               "ok": true,
               "tags": [],
               "tests": [
@@ -143,43 +143,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 13545,
+                      "duration": 4439,
                       "errors": [],
-                      "stdout": [
-                        {
-                          "text": "✅ Connected to room successfully\n"
-                        },
-                        {
-                          "text": "Agent participant visible: false\n"
-                        },
-                        {
-                          "text": "Audio elements found: 0\n"
-                        },
-                        {
-                          "text": "WebSocket status: WebSocket available\n"
-                        },
-                        {
-                          "text": "Room status: No room connection\n"
-                        },
-                        {
-                          "text": "Audio tracks: 1\n"
-                        },
-                        {
-                          "text": "Agent audio status: No agent audio\n"
-                        },
-                        {
-                          "text": "📸 Screenshot saved as audio-debug.png\n"
-                        },
-                        {
-                          "text": "Console status: Console available\n"
-                        },
-                        {
-                          "text": "🔍 Audio debugging complete - check the logs above for issues\n"
-                        }
-                      ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-14T23:33:31.107Z",
+                      "startTime": "2025-09-15T00:58:13.502Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -187,14 +156,14 @@
                   "status": "expected"
                 }
               ],
-              "id": "f95c8bc1e48d2b938ff6-f4069c3fa82841b29375",
-              "file": "browser-audio-debug.spec.ts",
+              "id": "9e210e5786d6ecf24bf6-6f6a4462d92f87e645e6",
+              "file": "questionnaire-system.spec.ts",
               "line": 4,
               "column": 7
             },
             {
-              "title": "should test LiveKit room connection and audio",
-              "ok": false,
+              "title": "should test questionnaire API endpoints",
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -207,63 +176,91 @@
                     {
                       "workerIndex": 1,
                       "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 16742,
-                      "error": {
-                        "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n",
-                        "stack": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n\n    at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:129:16",
-                        "location": {
-                          "file": "/Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts",
-                          "column": 16,
-                          "line": 129
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 127 |\u001b[39m\n \u001b[90m 128 |\u001b[39m     \u001b[90m// Wait for connection\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 129 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'button:has-text(\"Disconnect\")'\u001b[39m\u001b[33m,\u001b[39m {\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 130 |\u001b[39m       timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 131 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 132 |\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts",
-                            "column": 16,
-                            "line": 129
-                          },
-                          "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Disconnect\")') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 127 |\u001b[39m\n \u001b[90m 128 |\u001b[39m     \u001b[90m// Wait for connection\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 129 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'button:has-text(\"Disconnect\")'\u001b[39m\u001b[33m,\u001b[39m {\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 130 |\u001b[39m       timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 131 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 132 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:129:16\u001b[22m"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 612,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-14T23:33:31.082Z",
+                      "startTime": "2025-09-15T00:58:13.506Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/admin/dev/tmp/strella/interview-next-service/test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/admin/dev/tmp/strella/interview-next-service/test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/admin/dev/tmp/strella/interview-next-service/test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts",
-                        "column": 16,
-                        "line": 129
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
-              "id": "f95c8bc1e48d2b938ff6-6c03d7fb5b29e2bda4f9",
-              "file": "browser-audio-debug.spec.ts",
-              "line": 106,
+              "id": "9e210e5786d6ecf24bf6-a89d1f78c7c533e34492",
+              "file": "questionnaire-system.spec.ts",
+              "line": 85,
+              "column": 7
+            },
+            {
+              "title": "should test agent API with questionnaire data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1266,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T00:58:13.527Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9e210e5786d6ecf24bf6-063e243fe708ba82a3ec",
+              "file": "questionnaire-system.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "should verify questionnaire UI elements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1658,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T00:58:13.528Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9e210e5786d6ecf24bf6-7c78102a6e005f50d904",
+              "file": "questionnaire-system.spec.ts",
+              "line": 142,
               "column": 7
             }
           ]
@@ -273,11 +270,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-09-14T23:33:29.254Z",
-    "duration": 20272.808,
-    "expected": 1,
+    "startTime": "2025-09-15T00:58:12.719Z",
+    "duration": 5701.572,
+    "expected": 4,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }

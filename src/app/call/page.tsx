@@ -48,9 +48,10 @@ export default function CallPage() {
   const [muted, setMuted] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
-  const [selectedPrompt, setSelectedPrompt] = useState<string>("");
-  const [availablePrompts, setAvailablePrompts] = useState<
-    Array<{ id: string; name: string; content: string }>
+  const [selectedQuestionnaire, setSelectedQuestionnaire] =
+    useState<string>("");
+  const [availableQuestionnaires, setAvailableQuestionnaires] = useState<
+    Array<{ id: string; name: string; description?: string; content: string }>
   >([]);
   const [agentAudioUrl, setAgentAudioUrl] = useState<string | null>(null);
   const roomRef = useRef<Room | null>(null);
@@ -67,30 +68,25 @@ export default function CallPage() {
 
   // Load available prompts on component mount
   useEffect(() => {
-    loadAvailablePrompts();
+    loadAvailableQuestionnaires();
   }, []);
 
   // Load available prompts from the API
-  async function loadAvailablePrompts() {
+  async function loadAvailableQuestionnaires() {
     try {
-      const response = await fetch("/api/questionnaire-prompt-builder");
-      const data = await response.json();
+      const response = await fetch("/api/questionnaires");
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableQuestionnaires(data.questionnaires);
 
-      // For now, we'll use the single global prompt
-      // In a full implementation, you'd have multiple prompts stored
-      setAvailablePrompts([
-        {
-          id: "global",
-          name: "Global Interview Prompt",
-          content: data.prompt,
-        },
-      ]);
-
-      // Set the global prompt as default
-      setSelectedPrompt("global");
+        // Set the first questionnaire as default
+        if (data.questionnaires.length > 0) {
+          setSelectedQuestionnaire(data.questionnaires[0].id);
+        }
+      }
     } catch (error) {
-      console.error("Failed to load prompts:", error);
-      toast.error("Failed to load prompts");
+      console.error("Failed to load questionnaires:", error);
+      toast.error("Failed to load questionnaires");
     }
   }
 
@@ -159,23 +155,25 @@ export default function CallPage() {
         }
       }
 
-      // Save room-specific prompt if needed
-      const selectedPromptData = availablePrompts.find(
-        p => p.id === selectedPrompt
+      // Save room-specific questionnaire if needed
+      const selectedQuestionnaireData = availableQuestionnaires.find(
+        q => q.id === selectedQuestionnaire
       );
-      if (selectedPromptData && selectedPromptData.id !== "global") {
-        console.log("💾 Saving room-specific prompt...");
-        await fetch("/api/room-prompt", {
+      if (selectedQuestionnaireData) {
+        console.log("💾 Starting agent with selected questionnaire...");
+        await fetch("/api/agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             roomName,
-            prompt: selectedPromptData.content,
+            action: "start",
+            questionnaireId: selectedQuestionnaireData.id,
+            questionnaireContent: selectedQuestionnaireData.content,
           }),
         });
       }
 
-      // Get LiveKit URL and token with prompt information
+      // Get LiveKit URL and token
       console.log("📡 Fetching LiveKit credentials...");
       const [urlResponse, tokenResponse] = await Promise.all([
         fetch("/api/livekit/url"),
@@ -185,8 +183,6 @@ export default function CallPage() {
           body: JSON.stringify({
             roomName,
             identity,
-            promptId: selectedPrompt,
-            promptContent: selectedPromptData?.content || "",
           }),
         }),
       ]);
@@ -412,17 +408,17 @@ export default function CallPage() {
                 </div>
                 <div>
                   <label className="text-fg mb-2 block text-sm font-medium">
-                    Interview Prompt
+                    Interview Questionnaire
                   </label>
                   <div className="space-y-2">
                     <select
-                      value={selectedPrompt}
-                      onChange={e => setSelectedPrompt(e.target.value)}
+                      value={selectedQuestionnaire}
+                      onChange={e => setSelectedQuestionnaire(e.target.value)}
                       className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     >
-                      {availablePrompts.map(prompt => (
-                        <option key={prompt.id} value={prompt.id}>
-                          {prompt.name}
+                      {availableQuestionnaires.map(questionnaire => (
+                        <option key={questionnaire.id} value={questionnaire.id}>
+                          {questionnaire.name}
                         </option>
                       ))}
                     </select>
@@ -436,7 +432,7 @@ export default function CallPage() {
                         icon={<Plus className="h-3 w-3" />}
                         className="text-xs"
                       >
-                        New Prompt
+                        New Questionnaire
                       </Button>
                       <Button
                         onClick={() =>

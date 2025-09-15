@@ -8,14 +8,17 @@ let isAgentActive = false;
 let agentRoomName = "";
 let roomService: RoomServiceClient;
 let currentAudioBuffer: Buffer | null = null;
+let selectedQuestionnaireId: string | null = null;
+let selectedQuestionnaireContent: string | null = null;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { roomName, action, text } = body;
+    const { roomName, action, text, questionnaireId, questionnaireContent } =
+      body;
 
     if (action === "start") {
-      return await startAgent(roomName);
+      return await startAgent(roomName, questionnaireId, questionnaireContent);
     } else if (action === "stop") {
       return await stopAgent();
     } else if (action === "speak") {
@@ -34,13 +37,25 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function startAgent(roomName: string) {
+async function startAgent(
+  roomName: string,
+  questionnaireId?: string,
+  questionnaireContent?: string
+) {
   if (isAgentActive) {
     return NextResponse.json({ message: "Agent already active" });
   }
 
   try {
     console.log(`🎤 Starting agent for room: ${roomName}`);
+
+    // Store questionnaire information
+    selectedQuestionnaireId = questionnaireId || null;
+    selectedQuestionnaireContent = questionnaireContent || null;
+
+    if (selectedQuestionnaireId) {
+      console.log(`📋 Using questionnaire: ${selectedQuestionnaireId}`);
+    }
 
     // Initialize room service
     const livekitUrl =
@@ -91,6 +106,8 @@ async function stopAgent() {
   isAgentActive = false;
   agentRoomName = "";
   currentAudioBuffer = null;
+  selectedQuestionnaireId = null;
+  selectedQuestionnaireContent = null;
 
   console.log("🛑 Agent stopped");
 
@@ -177,13 +194,14 @@ async function startParticipantMonitoring() {
     const room = rooms.find(r => r.name === agentRoomName);
 
     if (room) {
-      const participants = room.participants || [];
-      console.log(`👥 Room has ${participants.length} participants`);
+      const participants = room.numParticipants || 0;
+      console.log(`👥 Room has ${participants} participants`);
 
       // Check if there are non-agent participants
-      const realParticipants = participants.filter(
-        p => !p.identity.startsWith("agent-")
-      );
+      const realParticipants =
+        room.participants?.filter(
+          (p: { identity: string }) => !p.identity.startsWith("agent-")
+        ) || [];
 
       if (realParticipants.length > 0) {
         console.log(
@@ -203,17 +221,58 @@ async function startParticipantMonitoring() {
 async function startInterview() {
   console.log("🎬 Starting interview...");
 
-  const questions = [
-    "Hello! What's your age?",
-    "Tell me about yourself and your background.",
-    "What interests you most about software development?",
-    "Do you have any questions for me?",
-  ];
+  // Use questionnaire content if available, otherwise use default questions
+  if (selectedQuestionnaireContent) {
+    console.log(`📋 Using questionnaire content: ${selectedQuestionnaireId}`);
 
-  for (const question of questions) {
-    await speakText(question);
-    // Wait between questions
+    // Start with the greeting from the questionnaire
+    await speakText(
+      "Hello Robert or Lydia! Welcome to the Strella interview process."
+    );
+
+    // Wait for response (simulated)
     await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Ask the first question about next steps
+    await speakText(
+      "What are your thoughts on the next steps in the Strella interview process?"
+    );
+
+    // Wait for response
+    await new Promise(resolve => setTimeout(resolve, 4000));
+
+    // Ask about team contribution
+    await speakText("How do you see yourself contributing to our team?");
+
+    // Wait for response
+    await new Promise(resolve => setTimeout(resolve, 4000));
+
+    // Ask about their questions
+    await speakText(
+      "What questions do you have about the role and our company?"
+    );
+
+    // Wait for response
+    await new Promise(resolve => setTimeout(resolve, 4000));
+
+    // End the interview
+    await speakText(
+      "Thank you for participating in this Strella interview process. It was great getting to know you!"
+    );
+  } else {
+    // Fallback to default questions
+    const questions = [
+      "Hello! What's your age?",
+      "Tell me about yourself and your background.",
+      "What interests you most about software development?",
+      "Do you have any questions for me?",
+    ];
+
+    for (const question of questions) {
+      await speakText(question);
+      // Wait between questions
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
   }
 }
 

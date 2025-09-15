@@ -1,58 +1,12 @@
-<testsuites id="" name="" tests="2" failures="1" skipped="0" errors="0" time="20.272808">
-<testsuite name="browser-audio-debug.spec.ts" timestamp="2025-09-14T23:33:29.323Z" hostname="chromium" tests="2" failures="1" skipped="0" time="30.287" errors="0">
-<testcase name="Browser Audio Debugging › should debug audio streaming from agent to browser" classname="browser-audio-debug.spec.ts" time="13.545">
-<system-out>
-<![CDATA[✅ Connected to room successfully
-Agent participant visible: false
-Audio elements found: 0
-WebSocket status: WebSocket available
-Room status: No room connection
-Audio tracks: 1
-Agent audio status: No agent audio
-📸 Screenshot saved as audio-debug.png
-Console status: Console available
-🔍 Audio debugging complete - check the logs above for issues
-]]>
-</system-out>
+<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="5.7015720000000005">
+<testsuite name="questionnaire-system.spec.ts" timestamp="2025-09-15T00:58:12.813Z" hostname="chromium" tests="4" failures="0" skipped="0" time="7.975" errors="0">
+<testcase name="Questionnaire System Tests › should create and use custom questionnaire" classname="questionnaire-system.spec.ts" time="4.439">
 </testcase>
-<testcase name="Browser Audio Debugging › should test LiveKit room connection and audio" classname="browser-audio-debug.spec.ts" time="16.742">
-<failure message="browser-audio-debug.spec.ts:106:7 should test LiveKit room connection and audio" type="FAILURE">
-<![CDATA[  [chromium] › browser-audio-debug.spec.ts:106:7 › Browser Audio Debugging › should test LiveKit room connection and audio 
-
-    TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.
-    Call log:
-      - waiting for locator('button:has-text("Disconnect")') to be visible
-
-
-      127 |
-      128 |     // Wait for connection
-    > 129 |     await page.waitForSelector('button:has-text("Disconnect")', {
-          |                ^
-      130 |       timeout: 15000,
-      131 |     });
-      132 |
-        at /Users/admin/dev/tmp/strella/interview-next-service/tests/browser-audio-debug.spec.ts:129:16
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    Error Context: ../test-results/browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/error-context.md
-]]>
-</failure>
-<system-out>
-<![CDATA[
-[[ATTACHMENT|browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/test-failed-1.png]]
-
-[[ATTACHMENT|browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/video.webm]]
-
-[[ATTACHMENT|browser-audio-debug-Browse-975d1-t-room-connection-and-audio-chromium/error-context.md]]
-]]>
-</system-out>
+<testcase name="Questionnaire System Tests › should test questionnaire API endpoints" classname="questionnaire-system.spec.ts" time="0.612">
+</testcase>
+<testcase name="Questionnaire System Tests › should test agent API with questionnaire data" classname="questionnaire-system.spec.ts" time="1.266">
+</testcase>
+<testcase name="Questionnaire System Tests › should verify questionnaire UI elements" classname="questionnaire-system.spec.ts" time="1.658">
 </testcase>
 </testsuite>
 </testsuites>
