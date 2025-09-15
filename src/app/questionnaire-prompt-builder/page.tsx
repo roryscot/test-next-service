@@ -13,69 +13,36 @@ import {
 } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { Save, FileText, Plus } from "lucide-react";
-
-type Prompt = {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import { Save, FileText } from "lucide-react";
 
 export default function PromptBuilder() {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [selectedPromptId, setSelectedPromptId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadPrompts();
+    loadCurrentPrompt();
   }, []);
 
-  async function loadPrompts() {
+  async function loadCurrentPrompt() {
     try {
-      const res = await fetch("/api/questionnaire-prompt-builder?list=true", {
+      const res = await fetch("/api/questionnaire-prompt-builder", {
         cache: "no-store",
       });
       const json = await res.json();
-      setPrompts(json?.prompts ?? []);
-
-      // Select the first prompt if available
-      if (json?.prompts?.length > 0) {
-        setSelectedPromptId(json.prompts[0].id);
-        setTitle(json.prompts[0].title);
-        setContent(json.prompts[0].content);
-      }
+      setTitle(json.title || "");
+      setContent(json.prompt || "");
     } catch {
-      toast.error("Failed to load prompts");
+      toast.error("Failed to load current prompt");
     } finally {
       setLoading(false);
     }
   }
 
-  function selectPrompt(prompt: Prompt) {
-    setSelectedPromptId(prompt.id);
-    setTitle(prompt.title);
-    setContent(prompt.content);
-  }
-
-  function createNewPrompt() {
-    setSelectedPromptId("");
-    setTitle("");
-    setContent("");
-  }
-
   async function save() {
-    if (!title.trim()) {
-      toast.error("Please enter a title");
-      return;
-    }
-
     if (!content.trim()) {
-      toast.error("Please enter content");
+      toast.error("Please enter a prompt");
       return;
     }
 
@@ -85,152 +52,96 @@ export default function PromptBuilder() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title.trim(),
+          title: title.trim() || "Current Interview Prompt",
           prompt: content.trim(),
         }),
       });
-      if (!res.ok) throw new Error();
-      toast.success("Prompt saved successfully");
-      await loadPrompts(); // Reload prompts
+
+      if (res.ok) {
+        toast.success("Prompt saved successfully!");
+      } else {
+        toast.error("Failed to save prompt");
+      }
     } catch {
-      toast.error("Save failed");
+      toast.error("Failed to save prompt");
     } finally {
       setSaving(false);
     }
   }
 
-  return (
-    <AppShell title="Questionnaire Prompt Builder">
-      <div className="mx-auto max-w-6xl space-y-6">
-        {/* Prompts List */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                  <FileText className="text-primary h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle>Saved Prompts</CardTitle>
-                  <CardDescription>
-                    Manage your interview questionnaires
-                  </CardDescription>
-                </div>
-              </div>
-              <Button
-                onClick={createNewPrompt}
-                icon={<Plus />}
-                iconPosition="left"
-                variant="outline"
-              >
-                New Prompt
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Spinner label="Loading prompts…" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {prompts.length === 0 ? (
-                  <div className="text-muted-foreground py-8 text-center">
-                    <FileText className="mx-auto mb-3 h-12 w-12 opacity-50" />
-                    <p>No prompts saved yet</p>
-                    <p className="text-sm">
-                      Create your first prompt to get started
-                    </p>
-                  </div>
-                ) : (
-                  prompts.map(prompt => (
-                    <div
-                      key={prompt.id}
-                      className={`cursor-pointer rounded-lg border p-3 transition-colors ${
-                        selectedPromptId === prompt.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-border-hover"
-                      }`}
-                      onClick={() => selectPrompt(prompt)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">{prompt.title}</h3>
-                          <p className="text-muted-foreground text-sm">
-                            {prompt.content.substring(0, 100)}...
-                          </p>
-                          <p className="text-muted-foreground mt-1 text-xs">
-                            Updated:{" "}
-                            {new Date(prompt.updatedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+  if (loading) {
+    return (
+      <AppShell title="Interview Prompt Builder">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex items-center justify-center py-12">
+            <Spinner className="h-8 w-8" />
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
-        {/* Prompt Editor */}
+  return (
+    <AppShell title="Interview Prompt Builder">
+      <div className="mx-auto max-w-4xl space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                <FileText className="text-primary h-5 w-5" />
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+                <FileText className="h-6 w-6 text-white" />
               </div>
               <div>
-                <CardTitle>
-                  {selectedPromptId ? "Edit Prompt" : "Create New Prompt"}
+                <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+                  Interview Prompt Builder
                 </CardTitle>
-                <CardDescription>
-                  {selectedPromptId
-                    ? "Modify the selected prompt"
-                    : "Create a new interview questionnaire"}
+                <CardDescription className="mt-1 text-gray-600">
+                  Create and edit the interview prompt that will be used for all
+                  interviews
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <label className="text-fg mb-2 block text-sm font-medium">
-                  Prompt Title
-                </label>
-                <Input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder="Enter a title for this prompt..."
-                  className="w-full"
-                />
-              </div>
+          <CardContent className="space-y-6">
+            <div>
+              <label className="text-fg mb-2 block text-sm font-medium">
+                Prompt Title
+              </label>
+              <Input
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Enter prompt title"
+              />
+            </div>
 
-              <div>
-                <label className="text-fg mb-2 block text-sm font-medium">
-                  Interview Instructions
-                </label>
-                <Textarea
-                  value={content}
-                  onChange={e => setContent(e.target.value)}
-                  className="h-72"
-                  placeholder="Enter your interview instructions here..."
-                />
-              </div>
+            <div>
+              <label className="text-fg mb-2 block text-sm font-medium">
+                Interview Prompt
+              </label>
+              <Textarea
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                placeholder="Enter your interview prompt here..."
+                rows={12}
+                className="resize-none"
+              />
+              <p className="mt-2 text-sm text-gray-500">
+                This prompt will be used by the AI interviewer to conduct
+                interviews. Include specific questions, greetings, and
+                instructions for the interviewer.
+              </p>
+            </div>
 
-              <div className="border-border flex items-center justify-between border-t pt-4">
-                <div className="text-muted-foreground text-sm">
-                  💡 Keep it concise and action-oriented for best results
-                </div>
-                <Button
-                  onClick={save}
-                  loading={saving}
-                  icon={<Save />}
-                  iconPosition="left"
-                >
-                  {selectedPromptId ? "Update Prompt" : "Save New Prompt"}
-                </Button>
-              </div>
+            <div className="flex justify-end">
+              <Button
+                onClick={save}
+                disabled={saving || !content.trim()}
+                loading={saving}
+                icon={<Save className="h-4 w-4" />}
+                iconPosition="left"
+                className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-xl"
+              >
+                {saving ? "Saving..." : "Save Prompt"}
+              </Button>
             </div>
           </CardContent>
         </Card>
