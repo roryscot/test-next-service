@@ -101,8 +101,10 @@ async function startAgent(roomName: string) {
 
     console.log("🤖 Agent is now monitoring the room");
 
-    // Start monitoring for participants
-    startParticipantMonitoring();
+    // Start monitoring for participants after a short delay to avoid race conditions
+    setTimeout(() => {
+      startParticipantMonitoring();
+    }, 2000);
 
     return NextResponse.json({
       message: "Agent started successfully",
@@ -223,7 +225,6 @@ function parseQuestionnaire(content: string): string[] {
 }
 
 // Global state for participant tracking
-let lastRealParticipantCount = 0;
 
 async function startParticipantMonitoring() {
   if (!isAgentActive) return;
@@ -243,6 +244,13 @@ async function startParticipantMonitoring() {
       console.log(
         `👥 Room has ${currentParticipantCount} participants (${currentRealParticipantCount} real)`
       );
+      console.log(
+        `🔍 Real participants:`,
+        realParticipants.map(p => p.identity)
+      );
+      console.log(
+        `🔍 Last real participant count: ${lastRealParticipantCount}`
+      );
 
       // Check for participant changes
       if (currentRealParticipantCount !== lastRealParticipantCount) {
@@ -256,7 +264,8 @@ async function startParticipantMonitoring() {
               `🎬 Starting interview with ${currentRealParticipantCount} participants`
             );
             interviewStarted = true;
-            await startInterview();
+            // Start interview in a separate async context to avoid blocking
+            setImmediate(() => startInterview());
           }
         } else {
           // Participants left
@@ -281,6 +290,12 @@ async function startParticipantMonitoring() {
 }
 
 async function startInterview() {
+  // Prevent multiple interview starts
+  if (interviewStarted && interviewQuestions.length > 0) {
+    console.log("⚠️ Interview already started, skipping");
+    return;
+  }
+
   console.log("🎬 Starting interview...");
   console.log(`📋 Interview questions (${interviewQuestions.length}):`);
   interviewQuestions.forEach((q, i) => {
