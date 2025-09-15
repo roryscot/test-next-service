@@ -57,6 +57,7 @@ export default function CallPage() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LocalAudioTrack | null>(null);
+  const audioCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup audio URL on unmount
   useEffect(() => {
@@ -229,6 +230,12 @@ export default function CallPage() {
 
         // Enable audio playback after connection
         enableAudio();
+
+        // Start checking for agent audio every 2 seconds
+        audioCheckIntervalRef.current = setInterval(
+          checkAndPlayAgentAudio,
+          2000
+        );
       });
       room.on(RoomEvent.Disconnected, reason => {
         console.log("❌ Disconnected from room:", reason);
@@ -271,8 +278,7 @@ export default function CallPage() {
 
       console.log("🎉 Connection complete!");
 
-      // Fetch and play agent audio
-      await playAgentAudio();
+      // The agent will automatically start the interview when it detects participants
     } catch (error) {
       console.error("❌ Connection failed:", error);
       const errorMessage =
@@ -296,54 +302,37 @@ export default function CallPage() {
     }
   }
 
-  async function playAgentAudio() {
+  // Function to check for agent audio and play it
+  async function checkAndPlayAgentAudio() {
     try {
-      console.log("🎵 Triggering agent to speak...");
-
-      // First, trigger the agent to speak
-      const speakResponse = await fetch("/api/agent", {
+      const response = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "speak",
-          text: "Hello! Welcome to the interview. I am your AI interviewer.",
-        }),
+        body: JSON.stringify({ action: "getAudio" }),
       });
 
-      if (speakResponse.ok) {
-        console.log("🎵 Agent speech triggered, fetching audio...");
+      if (response.ok) {
+        // Create blob URL for audio
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
 
-        // Wait a moment for audio generation
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Clean up previous audio URL
+        if (agentAudioUrl) {
+          URL.revokeObjectURL(agentAudioUrl);
+        }
 
-        // Fetch audio from agent
-        const response = await fetch("/api/agent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "getAudio" }),
+        setAgentAudioUrl(audioUrl);
+
+        // Play the audio
+        const audio = new Audio(audioUrl);
+        audio.play().catch(error => {
+          console.error("Failed to play agent audio:", error);
         });
 
-        if (response.ok) {
-          // Create blob URL for audio
-          const audioBlob = await response.blob();
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setAgentAudioUrl(audioUrl);
-
-          // Play the audio
-          const audio = new Audio(audioUrl);
-          audio.play().catch(error => {
-            console.error("Failed to play agent audio:", error);
-          });
-
-          console.log("🎵 Agent audio playing...");
-        } else {
-          console.log("No agent audio available yet");
-        }
-      } else {
-        console.log("Failed to trigger agent speech");
+        console.log("🎵 Agent audio playing...");
       }
-    } catch (error) {
-      console.error("Failed to fetch agent audio:", error);
+    } catch {
+      // Silently ignore errors - agent might not have audio ready yet
     }
   }
 
@@ -358,6 +347,12 @@ export default function CallPage() {
   }
 
   async function disconnect() {
+    // Clear audio check interval
+    if (audioCheckIntervalRef.current) {
+      clearInterval(audioCheckIntervalRef.current);
+      audioCheckIntervalRef.current = null;
+    }
+
     await roomRef.current?.disconnect();
     setStatus("disconnected");
   }
@@ -375,6 +370,11 @@ export default function CallPage() {
 
   useEffect(
     () => () => {
+      // Clear audio check interval
+      if (audioCheckIntervalRef.current) {
+        clearInterval(audioCheckIntervalRef.current);
+      }
+
       roomRef.current?.disconnect();
     },
     []
