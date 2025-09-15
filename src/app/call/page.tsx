@@ -52,8 +52,18 @@ export default function CallPage() {
   const [availablePrompts, setAvailablePrompts] = useState<
     Array<{ id: string; name: string; content: string }>
   >([]);
+  const [agentAudioUrl, setAgentAudioUrl] = useState<string | null>(null);
   const roomRef = useRef<Room | null>(null);
   const micRef = useRef<LocalAudioTrack | null>(null);
+
+  // Cleanup audio URL on unmount
+  useEffect(() => {
+    return () => {
+      if (agentAudioUrl) {
+        URL.revokeObjectURL(agentAudioUrl);
+      }
+    };
+  }, [agentAudioUrl]);
 
   // Load available prompts on component mount
   useEffect(() => {
@@ -245,6 +255,9 @@ export default function CallPage() {
       refreshParticipants();
 
       console.log("🎉 Connection complete!");
+
+      // Fetch and play agent audio
+      await playAgentAudio();
     } catch (error) {
       console.error("❌ Connection failed:", error);
       const errorMessage =
@@ -265,6 +278,57 @@ export default function CallPage() {
       setConnectionError(userMessage);
       setStatus("failed");
       toast.error(`Connection failed: ${userMessage}`);
+    }
+  }
+
+  async function playAgentAudio() {
+    try {
+      console.log("🎵 Triggering agent to speak...");
+
+      // First, trigger the agent to speak
+      const speakResponse = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "speak",
+          text: "Hello! Welcome to the interview. I am your AI interviewer.",
+        }),
+      });
+
+      if (speakResponse.ok) {
+        console.log("🎵 Agent speech triggered, fetching audio...");
+
+        // Wait a moment for audio generation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Fetch audio from agent
+        const response = await fetch("/api/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "getAudio" }),
+        });
+
+        if (response.ok) {
+          // Create blob URL for audio
+          const audioBlob = await response.blob();
+          const audioUrl = URL.createObjectURL(audioBlob);
+          setAgentAudioUrl(audioUrl);
+
+          // Play the audio
+          const audio = new Audio(audioUrl);
+          audio.play().catch(error => {
+            console.error("Failed to play agent audio:", error);
+          });
+
+          console.log("🎵 Agent audio playing...");
+        } else {
+          console.log("No agent audio available yet");
+        }
+      } else {
+        console.log("Failed to trigger agent speech");
+      }
+    } catch (error) {
+      console.error("Failed to fetch agent audio:", error);
     }
   }
 
